@@ -2,7 +2,7 @@
   <div class="layout">
     <nav class="navbar" v-if="!$route.meta.hideNavbar">
       <header>
-        <router-link to="/"> <img src="/images/MirrorIDE_text.png" class="logo"> </router-link>
+        <router-link to="/"> <img src="/images/MirrorIDE_text.png" alt="MirrorIDE" class="logo"> </router-link>
       </header>
       <div class="nav-links">
         <router-link class="nav-btn" to="/">Join</router-link> <!--demo link-->
