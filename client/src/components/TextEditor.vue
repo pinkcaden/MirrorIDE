@@ -1,0 +1,125 @@
+<script>
+import {basicSetup} from 'codemirror'
+import {EditorView, lineNumbers} from '@codemirror/view'
+import {Compartment} from '@codemirror/state'
+import {oneDark} from '@codemirror/theme-one-dark';
+
+const baseTheme = {
+  "&": {maxHeight: "600px", maxWidth: "400px"},
+  ".cm-content, .cm-gutter": {minHeight: "600px"},
+  ".cm-scroller": {overflow: "auto"},
+  ".cm-editor": {height: "600px", width: "400px"}
+}
+
+async function getLang(lang) {
+  try {
+    if (lang === 'js') {
+      const {javascript} = await import('@codemirror/lang-javascript')
+      return javascript({typescript: false})
+    } else if (lang === 'html') {
+      const {html} = await import('@codemirror/lang-html')
+      return html()
+    } else if (lang === 'css') {
+      const {css} = await import('@codemirror/lang-css')
+      return css()
+    } else {
+      return lineNumbers()
+    }
+  } catch (e) {
+    console.log(e);
+    throw e
+  }
+}
+
+export default {
+  name: "TextEditor",
+  data() {
+    return {
+      view: null,
+      editable: true,
+      editableCompartment: null,
+      darkMode: false,
+      themeCompartment: null
+    }
+  },
+  props: {
+    langChoice: {
+      type: String,
+      default: '',
+      required: true,
+      validator: (value) => {
+        return (value === 'js' || value === 'css' || value === 'html')
+      }
+    },
+  },
+
+  methods: {
+    getLastUpdate() {
+
+    },
+    getText() {
+      return this.view.state.doc.toString()
+    },
+    deleteText() {
+      this.view.dispatch({changes: {from: 0, to: this.view.state.doc.length}}, "")
+    },
+    rewriteText(newText) {
+      console.log(newText)
+      this.deleteText()
+      this.view.dispatch({changes: {from: 0, insert: newText}})
+    },
+    setEditable(editableStatus) {
+      const newExtension = EditorView.editable.of(editableStatus)
+      this.view.dispatch({
+        effects: this.editableCompartment.reconfigure(newExtension)
+      })
+    },
+    setDarkMode(darkModeStatus) {
+      if (darkModeStatus) {
+        this.view.dispatch({
+          effects: this.themeCompartment.reconfigure([EditorView.theme({...baseTheme, "&": {textAlign : "left"}}), oneDark])
+        })
+      } else {
+        this.view.dispatch({
+          effects: this.themeCompartment.reconfigure([EditorView.theme({...baseTheme, "&" : {background : "white", color: "black", textAlign: "left"}})])
+        })
+      }
+    }
+  },
+  async mounted() {
+
+    const langFunc = await getLang(this.langChoice)
+
+    this.editableCompartment = new Compartment()
+    this.themeCompartment = new Compartment()
+
+    this.view = new EditorView({
+      doc: "",
+      extensions: [basicSetup, langFunc,
+        this.themeCompartment.of([EditorView.theme({...baseTheme, "&": {background : "white", color: "black", textAlign: "left"}})]),
+        this.editableCompartment.of(EditorView.editable.of(this.editable))],
+      parent: this.$refs["editor"]
+    })
+  }
+}
+</script>
+
+<template>
+  <h3>{{ this.langChoice }}</h3>
+  <button @click="setEditable(false)">readonly</button>
+  <button @click="setEditable(true)">editable</button>
+  <button @click="deleteText()"> delete</button>
+  <button @click="rewriteText('hello')">rewrite</button>
+  <button @click="setDarkMode(true)">dark mode</button>
+  <button @click="setDarkMode(false)">light mode</button>
+  <div class="container-lg w-auto h-auto">
+    <div class="card border-2 border-black">
+      <div ref="editor">
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+
+</style>
