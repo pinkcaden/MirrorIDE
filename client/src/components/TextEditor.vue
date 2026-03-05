@@ -105,21 +105,18 @@ export default {
 </script>
 
 <template>
-  <h3>{{ this.langChoice }}</h3>
-  <button @click="setEditable(false)">readonly</button>
-  <button @click="setEditable(true)">editable</button>
-  <button @click="deleteText()"> delete</button>
-  <button @click="rewriteText('hello')">rewrite</button>
-  <button @click="setDarkMode(true)">dark mode</button>
-  <button @click="setDarkMode(false)">light mode</button>
+
   <div class="container-lg w-auto h-auto">
     <div class="card border-2 border-black">
-      <div ref="editor">
+      <div id = editor ref="editor">
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+  #editor{
+    width: 500px;
 
+  }
 </style>
