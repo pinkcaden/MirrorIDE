@@ -1,5 +1,5 @@
 <template>
-  <div :style = "{display : 'inline-flex'}">
+  <div :style="{display : 'inline-flex'}">
     <table>
       <tbody id="tableBody">
       <tr id="editorTabRow">
@@ -31,14 +31,17 @@
       <tr id="editorRow">
         <td id="editorSection" colspan="3">
           <TextEditor
+              ref="cssEditor"
               v-if="css"
               v-bind:lang-choice="'css'"
               v-show="this.currentLanguage === 'css'"></TextEditor>
           <TextEditor
+              ref="htmlEditor"
               v-bind:lang-choice="'html'"
               v-if="html"
               v-show="this.currentLanguage === 'html'"></TextEditor>
           <TextEditor
+              ref="jsEditor"
               v-if="js"
               v-bind:lang-choice="'js'"
               v-show="this.currentLanguage === 'js'"></TextEditor>
@@ -46,7 +49,6 @@
       </tr>
       </tbody>
     </table>
-    <h1>wifhqpio</h1>
   </div>
 </template>
 
@@ -54,10 +56,10 @@
 <script>
 import TextEditor from './TextEditor.vue'
 
-const BUTTON_STYLES = {
-  'js': { selected: "#F7ECBE", unselected: "#EDBF2D"},
-  'css': { selected: "#D5E4ED", unselected: "#2687D1"},
-  'html': { selected: "#E3D0B6", unselected: "#D98114"}
+const BUTTON_COLORS = {
+  'js': {selected: "#F7ECBE", unselected: "#EDBF2D"},
+  'css': {selected: "#D5E4ED", unselected: "#2687D1"},
+  'html': {selected: "#E3D0B6", unselected: "#D98114"}
 }
 
 
@@ -68,7 +70,7 @@ export default {
   data() {
     return {
       currentLanguage: String,
-      languages: []
+      languages: {}
     }
   },
   props: {
@@ -90,32 +92,41 @@ export default {
   },
   mounted() {
     if (this.js) {
-      this.languages.push('js')
+      this.languages['js'] = {button: this.$refs.jsBtn, editor: this.$refs.jsEditor, ...BUTTON_COLORS['js']};
     }
-    if (this.html){
-      this.languages.push('html')
+    if (this.html) {
+      this.languages['html'] = {button: this.$refs.jsBtn, editor: this.$refs.htmlEditor, ...BUTTON_COLORS['html']}
     }
-    if (this.css){
-      this.languages.push('css')
+    if (this.css) {
+      this.languages['css'] = {button: this.$refs.cssBtn, editor: this.$refs.cssEditor, ...BUTTON_COLORS['css']}
     }
 
-    this.currentLanguage = this.languages[0]
+    this.currentLanguage = Object.keys(this.languages)[0]
   },
   watch: {
     currentLanguage(newValue, oldValue) {
       if (typeof oldValue === 'function') {
-        for (const lang of this.languages) {
-          this.$refs[lang + 'Btn'].style.background = BUTTON_STYLES[lang].unselected
-          this.$refs[lang + 'Btn'].style.fontWeight = 'normal'
+        for (const lang of Object.values(this.languages)) {
+          lang.button.style.background = lang.unselected
+          lang.button.style.fontWeight = 'normal'
         }
       } else {
-        this.$refs[oldValue + 'Btn'].style.background = BUTTON_STYLES[oldValue].unselected
-        this.$refs[oldValue + 'Btn'].style.fontWeight = 'normal'
+        const oldLang = this.languages[oldValue]
+        oldLang.button.style.background = oldLang.unselected
+        oldLang.button.style.fontWeight = 'normal'
       }
-      this.$refs[newValue + 'Btn'].style.background = BUTTON_STYLES[newValue].selected
-      this.$refs[newValue + 'Btn'].style.fontWeight = 'bold'
+      const newLang = this.languages[newValue]
+      newLang.button.style.background = newLang.selected
+      newLang.button.style.fontWeight = 'bold'
+    }
+  },
+  methods: {
+
+    getInactivity() {
+
     }
   }
+
 }
 
 </script>
