@@ -9,7 +9,7 @@ export default {
 </script>
 
 <template>
-  <IDE v-bind:css = true v-bind:js = true v-bind:html = true></IDE>
+  <IDE v-bind:css = true v-bind:js = true v-bind:html = false></IDE>
 </template>
 
 <style scoped>

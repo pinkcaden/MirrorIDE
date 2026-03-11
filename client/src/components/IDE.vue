@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div :style = "{display : 'inline-flex'}">
     <table>
       <tbody id="tableBody">
       <tr id="editorTabRow">
@@ -46,6 +46,7 @@
       </tr>
       </tbody>
     </table>
+    <h1>wifhqpio</h1>
   </div>
 </template>
 
@@ -66,7 +67,8 @@ export default {
   },
   data() {
     return {
-      currentLanguage: String
+      currentLanguage: String,
+      languages: []
     }
   },
   props: {
@@ -87,12 +89,23 @@ export default {
     }
   },
   mounted() {
-    this.currentLanguage = this.js ? 'js' : this.css ? 'css' : 'html'
+    if (this.js) {
+      this.languages.push('js')
+    }
+    if (this.html){
+      this.languages.push('html')
+    }
+    if (this.css){
+      this.languages.push('css')
+    }
+
+    this.currentLanguage = this.languages[0]
   },
   watch: {
     currentLanguage(newValue, oldValue) {
       if (typeof oldValue === 'function') {
-        for (const lang of ['js', 'css', 'html']) {
+        for (const lang of this.languages) {
+          console.log(lang)
           this.$refs[lang + 'Btn'].style.background = BUTTON_STYLES[lang].unselected
           this.$refs[lang + 'Btn'].style.fontWeight = 'normal'
         }
