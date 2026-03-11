@@ -7,7 +7,7 @@ import {oneDark} from '@codemirror/theme-one-dark';
 const baseTheme = {
   "&": {maxHeight: "600px", maxWidth: "400px"},
   ".cm-content, .cm-gutter": {minHeight: "600px"},
-  ".cm-scroller": {overflow: "auto"},
+  ".cm-scroller": {overflow: "auto", height: "600px"},
   ".cm-editor": {height: "600px", width: "400px"}
 }
 
@@ -58,7 +58,7 @@ export default {
 
     },
     getText() {
-      return this.view.state.doc.toString()
+      return this.view.state.doc
     },
     deleteText() {
       this.view.dispatch({changes: {from: 0, to: this.view.state.doc.length}}, "")
@@ -105,7 +105,6 @@ export default {
 </script>
 
 <template>
-
   <div class="container-lg w-auto h-auto">
     <div class="card border-2 border-black">
       <div id = editor ref="editor">
@@ -117,6 +116,5 @@ export default {
 <style scoped>
   #editor{
     width: 500px;
-
   }
 </style>
