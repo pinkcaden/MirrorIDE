@@ -46,13 +46,14 @@
       </tr>
       </tbody>
     </table>
-    <h1>wifhqpio</h1>
+    <Terminal></Terminal>
   </div>
 </template>
 
 
 <script>
 import TextEditor from './TextEditor.vue'
+import Terminal from './Terminal.vue'
 
 const BUTTON_STYLES = {
   'js': { selected: "#F7ECBE", unselected: "#EDBF2D"},
@@ -63,7 +64,8 @@ const BUTTON_STYLES = {
 
 export default {
   components: {
-    TextEditor
+    TextEditor,
+    Terminal
   },
   data() {
     return {
