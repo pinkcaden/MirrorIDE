@@ -3,15 +3,11 @@ import {basicSetup} from 'codemirror'
 import {EditorView, lineNumbers} from '@codemirror/view'
 import {Compartment} from '@codemirror/state'
 import {oneDark} from '@codemirror/theme-one-dark';
-import debounceMaxWait from '../utils/debounceMaxWait.js'
-
-const DEBOUNCE_TIME = 1000;
-const DEBOUNCE_MAX = 2500;
 
 const baseTheme = {
   "&": {maxHeight: "600px", maxWidth: "400px"},
   ".cm-content, .cm-gutter": {minHeight: "600px"},
-  ".cm-scroller": {overflow: "auto", height: "600px"},
+  ".cm-scroller": {overflow: "auto"},
   ".cm-editor": {height: "600px", width: "400px"}
 }
 
@@ -43,8 +39,7 @@ export default {
       editable: true,
       editableCompartment: null,
       darkMode: false,
-      themeCompartment: null,
-      lastEdit: Date.now()
+      themeCompartment: null
     }
   },
   props: {
@@ -59,19 +54,17 @@ export default {
   },
 
   methods: {
-    setLastUpdate() {
-      this.lastEdit = Date.now()
-    },
     getLastUpdate() {
-      return this.lastEdit
+
     },
     getText() {
-      return this.view.state.doc
+      return this.view.state.doc.toString()
     },
     deleteText() {
       this.view.dispatch({changes: {from: 0, to: this.view.state.doc.length}}, "")
     },
     rewriteText(newText) {
+      console.log(newText)
       this.deleteText()
       this.view.dispatch({changes: {from: 0, insert: newText}})
     },
@@ -100,37 +93,33 @@ export default {
     this.editableCompartment = new Compartment()
     this.themeCompartment = new Compartment()
 
-    const debouncedUpdate =debounceMaxWait(this.setLastUpdate, DEBOUNCE_TIME, DEBOUNCE_MAX)
-    const editWatch = EditorView.updateListener.of((update) => {
-      if (update.docChanged) {
-        debouncedUpdate()
-      }
-    })
-
     this.view = new EditorView({
       doc: "",
-      extensions: [basicSetup, langFunc, editWatch,
+      extensions: [basicSetup, langFunc,
         this.themeCompartment.of([EditorView.theme({...baseTheme, "&": {background : "white", color: "black", textAlign: "left"}})]),
         this.editableCompartment.of(EditorView.editable.of(this.editable))],
       parent: this.$refs["editor"]
     })
-
   }
 }
 </script>
 
 <template>
-
+  <h3>{{ this.langChoice }}</h3>
+  <button @click="setEditable(false)">readonly</button>
+  <button @click="setEditable(true)">editable</button>
+  <button @click="deleteText()"> delete</button>
+  <button @click="rewriteText('hello')">rewrite</button>
+  <button @click="setDarkMode(true)">dark mode</button>
+  <button @click="setDarkMode(false)">light mode</button>
   <div class="container-lg w-auto h-auto">
     <div class="card border-2 border-black">
-      <div id = editor ref="editor">
+      <div ref="editor">
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-  #editor{
-    width: 500px;
-  }
+
 </style>
