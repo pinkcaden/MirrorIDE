@@ -3,6 +3,10 @@ import {basicSetup} from 'codemirror'
 import {EditorView, lineNumbers} from '@codemirror/view'
 import {Compartment} from '@codemirror/state'
 import {oneDark} from '@codemirror/theme-one-dark';
+import debounceMaxWait from '../utils/debounceMaxWait.js'
+
+const DEBOUNCE_TIME = 1000;
+const DEBOUNCE_MAX = 2500;
 
 const baseTheme = {
   "&": {maxHeight: "600px", maxWidth: "400px"},
@@ -39,7 +43,8 @@ export default {
       editable: true,
       editableCompartment: null,
       darkMode: false,
-      themeCompartment: null
+      themeCompartment: null,
+      lastEdit: null
     }
   },
   props: {
@@ -54,8 +59,11 @@ export default {
   },
 
   methods: {
+    setLastUpdate() {
+      this.lastEdit = Date.now()
+    },
     getLastUpdate() {
-
+      return this.lastEdit
     },
     getText() {
       return this.view.state.doc
@@ -64,7 +72,6 @@ export default {
       this.view.dispatch({changes: {from: 0, to: this.view.state.doc.length}}, "")
     },
     rewriteText(newText) {
-      console.log(newText)
       this.deleteText()
       this.view.dispatch({changes: {from: 0, insert: newText}})
     },
@@ -93,18 +100,27 @@ export default {
     this.editableCompartment = new Compartment()
     this.themeCompartment = new Compartment()
 
+    const debouncedUpdate =debounceMaxWait(this.setLastUpdate, DEBOUNCE_TIME, DEBOUNCE_MAX)
+    const editWatch = EditorView.updateListener.of((update) => {
+      if (update.docChanged) {
+        debouncedUpdate()
+      }
+    })
+
     this.view = new EditorView({
       doc: "",
-      extensions: [basicSetup, langFunc,
+      extensions: [basicSetup, langFunc, editWatch,
         this.themeCompartment.of([EditorView.theme({...baseTheme, "&": {background : "white", color: "black", textAlign: "left"}})]),
         this.editableCompartment.of(EditorView.editable.of(this.editable))],
       parent: this.$refs["editor"]
     })
+
   }
 }
 </script>
 
 <template>
+
   <div class="container-lg w-auto h-auto">
     <div class="card border-2 border-black">
       <div id = editor ref="editor">

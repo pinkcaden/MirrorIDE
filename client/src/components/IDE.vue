@@ -105,7 +105,6 @@ export default {
     currentLanguage(newValue, oldValue) {
       if (typeof oldValue === 'function') {
         for (const lang of this.languages) {
-          console.log(lang)
           this.$refs[lang + 'Btn'].style.background = BUTTON_STYLES[lang].unselected
           this.$refs[lang + 'Btn'].style.fontWeight = 'normal'
         }
