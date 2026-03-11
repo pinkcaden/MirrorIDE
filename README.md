@@ -13,6 +13,8 @@ Caden Pink
       feature
       bugfix
       update
+      foundation
+      support
   Example: client/bugfix/reduce-skip
 
   For spaces, use - .
