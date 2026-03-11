@@ -44,7 +44,7 @@ export default {
       editableCompartment: null,
       darkMode: false,
       themeCompartment: null,
-      lastEdit: null
+      lastEdit: Date.now()
     }
   },
   props: {

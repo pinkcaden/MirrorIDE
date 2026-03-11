@@ -123,7 +123,11 @@ export default {
   methods: {
 
     getInactivity() {
-
+      const inactivities = []
+      for (const lang of Object.values(this.languages)) {
+        inactivities.push(lang.editor.getLastUpdate())
+      }
+      return (Date.now() - Math.min(...inactivities)) / 1000
     }
   }
 
