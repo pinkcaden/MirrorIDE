@@ -102,7 +102,10 @@ export default {
 
     const debouncedUpdate =debounceMaxWait(this.setLastUpdate, DEBOUNCE_TIME, DEBOUNCE_MAX)
     const editWatch = EditorView.updateListener.of((update) => {
-      if (update.docChanged) {
+      if (update.docChanged)
+      {
+        console.log(update)
+
         debouncedUpdate()
       }
     })
