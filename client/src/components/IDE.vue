@@ -128,6 +128,24 @@ export default {
         inactivities.push(lang.editor.getLastUpdate())
       }
       return (Date.now() - Math.min(...inactivities)) / 1000
+    },
+    getTexts() {
+      const texts = {}
+      for (const lang of Object.keys(this.languages)) {
+        texts[lang] = this.languages[lang].editor.getText()
+      }
+      return texts
+    },
+    setTexts(texts) {
+      for (const lang of Object.keys(texts)) {
+        this.languages[lang].editor.rewriteText(texts[lang])
+      }
+    },
+    getUpdates(){
+
+    },
+    giveUpdates(){
+
     }
   }
 
