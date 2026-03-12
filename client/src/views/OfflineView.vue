@@ -18,6 +18,8 @@ export default {
 
 <template>
   <div>
+    <button @click="this.$refs['ide0'].requestSteal()">steal 1</button>
+    <button @click="this.$refs['ide0'].relinquishSteal({'js' : 'this is instructor js', 'css' : 'this is instructor css' })">free 1</button>
     <div>
       <button @click = "transfer(1)">1 to 2</button>
       <button @click = "transfer(0)">2 to 1</button>

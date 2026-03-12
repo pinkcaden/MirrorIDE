@@ -70,7 +70,9 @@ export default {
   data() {
     return {
       currentLanguage: String,
-      languages: {}
+      languages: {},
+      stolenDocs: undefined,
+      isStolen: false
     }
   },
   props: {
@@ -121,7 +123,36 @@ export default {
     }
   },
   methods: {
-
+    popUpConfirmation(message){
+      return confirm(message)
+    },
+    requestSteal(){
+      if (!this.isStolen) {
+        const confirmation = this.popUpConfirmation('Instructor wants to edit. Allow?')
+        if (confirmation) {
+          for (const value of Object.values(this.languages)){
+            value.editor.setEditable(false)
+          }
+          this.isStolen = true
+          return true
+        }
+      }
+      return false
+    },
+    relinquishSteal(newTexts) {
+      if (this.isStolen) {
+        const confirmation = this.popUpConfirmation("Save instructor's edits?")
+        if (confirmation) {
+          this.setTexts(newTexts)
+        }
+        for (const value of Object.values(this.languages)){
+          value.editor.setEditable(true)
+        }
+        this.isStolen = false
+        return true
+      }
+      return false
+    },
     getInactivity() {
       const inactivities = []
       for (const lang of Object.values(this.languages)) {
