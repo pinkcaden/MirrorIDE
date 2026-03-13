@@ -104,7 +104,6 @@ export default {
     const editWatch = EditorView.updateListener.of((update) => {
       if (update.docChanged)
       {
-        console.log(update)
 
         debouncedUpdate()
       }

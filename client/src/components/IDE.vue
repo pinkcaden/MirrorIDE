@@ -1,55 +1,52 @@
 <template>
   <div :style="{display : 'inline-flex'}">
-    <table>
-      <tbody id="tableBody">
-      <tr id="editorTabRow">
-        <td>
-          <button class="editorTab"
-                  v-if="js"
-                  @click="this.currentLanguage = 'js'"
-                  ref="jsBtn">JS
-          </button>
+    <div id="leftSide" :style="{display : 'flex', flexDirection : 'column'}">
+      <div id="btnRow" :style="{display : 'flex'}">
 
-        </td>
-        <td>
-          <button class="editorTab"
-                  v-if="css"
-                  @click="this.currentLanguage = 'css'"
-                  ref="cssBtn">CSS
-          </button>
+        <button class="editorBtn"
+                v-if="js"
+                @click="this.currentLanguage = 'js'"
+                ref="jsBtn">JS
+        </button>
 
-        </td>
-        <td>
-          <button class="editorTab"
-                  v-if="html"
-                  @click="this.currentLanguage = 'html'"
-                  ref="htmlBtn">HTML
-          </button>
+        <button class="editorBtn"
+                v-if="css"
+                @click="this.currentLanguage = 'css'"
+                ref="cssBtn">CSS
+        </button>
 
-        </td>
-      </tr>
-      <tr id="editorRow">
-        <td id="editorSection" colspan="3">
-          <TextEditor
-              ref="cssEditor"
-              v-if="css"
-              v-bind:lang-choice="'css'"
-              v-show="this.currentLanguage === 'css'"></TextEditor>
-          <TextEditor
-              ref="htmlEditor"
-              v-bind:lang-choice="'html'"
-              v-if="html"
-              v-show="this.currentLanguage === 'html'"></TextEditor>
-          <TextEditor
-              ref="jsEditor"
-              v-if="js"
-              v-bind:lang-choice="'js'"
-              v-show="this.currentLanguage === 'js'"></TextEditor>
-        </td>
-      </tr>
-      </tbody>
-    </table>
-    <Terminal></Terminal>
+        <button class="editorBtn"
+                v-if="html"
+                @click="this.currentLanguage = 'html'"
+                ref="htmlBtn">HTML
+        </button>
+
+      </div>
+
+      <TextEditor
+          ref="cssEditor"
+          v-if="css"
+          v-bind:lang-choice="'css'"
+          v-show="this.currentLanguage === 'css'"></TextEditor>
+      <TextEditor
+          ref="htmlEditor"
+          v-bind:lang-choice="'html'"
+          v-if="this.isStolen"
+          v-show="this.currentLanguage === 'html'"></TextEditor>
+
+      <TextEditor
+          ref="jsEditor"
+          v-if="js"
+          v-bind:lang-choice="'js'"
+          v-show="this.currentLanguage === 'js'"></TextEditor>
+    </div>
+    <div :style="{display: 'flex', flexDirection : 'column'}">
+      <div :style="{display: 'flex', flexDirection : 'row'}">
+        <label for="darkBtn">Dark Mode</label>
+        <input type="checkbox" id="darkBtn" v-model="this.darkMode"/>
+      </div>
+      <Terminal></Terminal>
+    </div>
   </div>
 </template>
 
@@ -73,9 +70,10 @@ export default {
   data() {
     return {
       currentLanguage: String,
-      languages: {},
-      stolenDocs: undefined,
-      isStolen: false
+      _languages: {},
+      _stolenDocs: undefined,
+      isStolen: false,
+      darkMode: false
     }
   },
   props: {
@@ -97,44 +95,54 @@ export default {
   },
   mounted() {
     if (this.js) {
-      this.languages['js'] = {button: this.$refs.jsBtn, editor: this.$refs.jsEditor, ...BUTTON_COLORS['js']};
+      this._languages['js'] = {button: this.$refs.jsBtn, editor: this.$refs.jsEditor, ...BUTTON_COLORS['js']};
     }
     if (this.html) {
-      this.languages['html'] = {button: this.$refs.jsBtn, editor: this.$refs.htmlEditor, ...BUTTON_COLORS['html']}
+      this._languages['html'] = {button: this.$refs.htmlBtn, editor: this.$refs.htmlEditor, ...BUTTON_COLORS['html']}
     }
     if (this.css) {
-      this.languages['css'] = {button: this.$refs.cssBtn, editor: this.$refs.cssEditor, ...BUTTON_COLORS['css']}
+      this._languages['css'] = {button: this.$refs.cssBtn, editor: this.$refs.cssEditor, ...BUTTON_COLORS['css']}
     }
-
-    this.currentLanguage = Object.keys(this.languages)[0]
+    for (const lang in Object.keys(this._languages)) {
+      this.currentLanguage = lang
+    }
+    this.currentLanguage = Object.keys(this._languages)[0]
   },
   watch: {
     currentLanguage(newValue, oldValue) {
       if (typeof oldValue === 'function') {
-        for (const lang of Object.values(this.languages)) {
+        for (const lang of Object.values(this._languages)) {
           lang.button.style.background = lang.unselected
           lang.button.style.fontWeight = 'normal'
         }
       } else {
-        const oldLang = this.languages[oldValue]
+        const oldLang = this._languages[oldValue]
         oldLang.button.style.background = oldLang.unselected
         oldLang.button.style.fontWeight = 'normal'
       }
-      const newLang = this.languages[newValue]
+      const newLang = this._languages[newValue]
       newLang.button.style.background = newLang.selected
       newLang.button.style.fontWeight = 'bold'
+    },
+    darkMode(newValue) {
+      for (const lang of Object.values(this._languages)){
+        lang.editor.setDarkMode(newValue)
+      }
     }
   },
+
   methods: {
-    popUpConfirmation(message){
+    _popUpConfirmation(message) {
       return confirm(message)
     },
     requestSteal(){
       if (!this.isStolen) {
-        const confirmation = this.popUpConfirmation('Instructor wants to edit. Allow?')
+        const confirmation = this._popUpConfirmation('Instructor wants to edit. Allow?')
         if (confirmation) {
-          for (const value of Object.values(this.languages)){
+          this._stolenDocs = {}
+          for (const [key, value] of Object.entries(this._languages)) {
             value.editor.setEditable(false)
+            this._stolenDocs[key] = value.getText()
           }
           this.isStolen = true
           return true
@@ -144,11 +152,13 @@ export default {
     },
     relinquishSteal(newTexts) {
       if (this.isStolen) {
-        const confirmation = this.popUpConfirmation("Save instructor's edits?")
+        const confirmation = this._popUpConfirmation("Save instructor's edits?")
         if (confirmation) {
           this.setTexts(newTexts)
+        } else {
+          this.setTexts(this._stolenDocs)
         }
-        for (const value of Object.values(this.languages)){
+        for (const value of Object.values(this._languages)) {
           value.editor.setEditable(true)
         }
         this.isStolen = false
@@ -158,28 +168,22 @@ export default {
     },
     getInactivity() {
       const inactivities = []
-      for (const lang of Object.values(this.languages)) {
+      for (const lang of Object.values(this._languages)) {
         inactivities.push(lang.editor.getLastUpdate())
       }
-      return (Date.now() - Math.min(...inactivities)) / 1000
+      return (Date.now() - Math.max(...inactivities)) / 1000
     },
     getTexts() {
       const texts = {}
-      for (const lang of Object.keys(this.languages)) {
-        texts[lang] = this.languages[lang].editor.getText()
+      for (const lang of Object.keys(this._languages)) {
+        texts[lang] = this._languages[lang].editor.getText()
       }
       return texts
     },
     setTexts(texts) {
       for (const lang of Object.keys(texts)) {
-        this.languages[lang].editor.rewriteText(texts[lang])
+        this._languages[lang].editor.rewriteText(texts[lang])
       }
-    },
-    getUpdates(){
-
-    },
-    giveUpdates(){
-
     }
   }
 
@@ -190,13 +194,10 @@ export default {
 
 <style scoped>
 
-#editorTabRow {
-  margin: 0;
-  padding: 0;
-}
 
-.editorTab {
-  width: 100%;
+.editorBtn {
+  border-radius: 0;
+  width: 25%;
   height: 100%;
   margin: 0;
 }
