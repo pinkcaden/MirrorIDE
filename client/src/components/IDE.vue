@@ -49,12 +49,14 @@
       </tr>
       </tbody>
     </table>
+    <Terminal></Terminal>
   </div>
 </template>
 
 
 <script>
 import TextEditor from './TextEditor.vue'
+import Terminal from './Terminal.vue'
 
 const BUTTON_COLORS = {
   'js': {selected: "#F7ECBE", unselected: "#EDBF2D"},
@@ -65,7 +67,8 @@ const BUTTON_COLORS = {
 
 export default {
   components: {
-    TextEditor
+    TextEditor,
+    Terminal
   },
   data() {
     return {
