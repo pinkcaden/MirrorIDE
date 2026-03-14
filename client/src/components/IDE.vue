@@ -1,55 +1,47 @@
 <template>
-  <div :style="{display : 'inline-flex'}">
-    <div id="leftSide" :style="{display : 'flex', flexDirection : 'column'}">
-      <div id="btnRow" :style="{display : 'flex'}">
+  <div :style="{display: 'inline-flex'}">
+    <div class="container m-0 p-0">
+      <div class="row">
+        <div class="col">
+          <div class="container m-0 p-0">
+            <div class="row m-0 p-0">
+              <div :style="{display: 'inline-flex', flexDirection : 'row'}">
+                <button ref="jsBtn" v-if="js" @click="this.currentLanguage = 'js'" class="langBtn">JS</button>
+                <button ref="cssBtn" v-if="css" @click="this.currentLanguage = 'css'" class="langBtn">CSS</button>
+                <button ref="htmlBtn" v-if="html" @click="this.currentLanguage = 'html'" class="langBtn">HTML</button>
+              </div>
+            </div>
 
-        <button class="editorBtn"
-                v-if="js"
-                @click="this.currentLanguage = 'js'"
-                ref="jsBtn">JS
-        </button>
-
-        <button class="editorBtn"
-                v-if="css"
-                @click="this.currentLanguage = 'css'"
-                ref="cssBtn">CSS
-        </button>
-
-        <button class="editorBtn"
-                v-if="html"
-                @click="this.currentLanguage = 'html'"
-                ref="htmlBtn">HTML
-        </button>
-
+            <div class="row ps-4">
+              <TextEditor ref="cssEditor" v-if="css" v-bind:lang-choice="'css'"
+                          v-show="this.currentLanguage === 'css'"></TextEditor>
+              <TextEditor ref="htmlEditor" v-bind:lang-choice="'html'" v-if="this.isStolen"
+                          v-show="this.currentLanguage === 'html'"></TextEditor>
+              <TextEditor ref="jsEditor" v-if="js" v-bind:lang-choice="'js'"
+                          v-show="this.currentLanguage === 'js'"></TextEditor>
+            </div>
+            <div/>
+          </div>
+        </div>
+          <div class="col m-0 p-0">
+            <div class="container bg-white h-100">
+              <div class="row col-">
+                  <label for="darkBtn" class="p-1 m-1 form-check-input">Dark Mode </label>
+                  <input type="checkbox" id="darkBtn" v-model="this.darkMode" class="form-check"/>
+              </div>
+              <div class="row row-cols-4">
+                <RunButton :parentRun="this.handleRun"></RunButton>
+              </div>
+              <div class="row row-cols-6">
+                <Terminal ref="terminal"></Terminal>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <TextEditor
-          ref="cssEditor"
-          v-if="css"
-          v-bind:lang-choice="'css'"
-          v-show="this.currentLanguage === 'css'"></TextEditor>
-      <TextEditor
-          ref="htmlEditor"
-          v-bind:lang-choice="'html'"
-          v-if="this.isStolen"
-          v-show="this.currentLanguage === 'html'"></TextEditor>
-
-      <TextEditor
-          ref="jsEditor"
-          v-if="js"
-          v-bind:lang-choice="'js'"
-          v-show="this.currentLanguage === 'js'"></TextEditor>
     </div>
-    <div :style="{display: 'flex', flexDirection : 'column'}">
-      <div :style="{display: 'flex', flexDirection : 'row'}">
-        <label for="darkBtn">Dark Mode</label>
-        <input type="checkbox" id="darkBtn" v-model="this.darkMode"/>
-      </div>
-      <Terminal></Terminal>
-    </div>
-  </div>
+
 </template>
-
 
 <script>
 import TextEditor from './TextEditor.vue'
