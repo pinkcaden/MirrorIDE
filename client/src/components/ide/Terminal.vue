@@ -1,13 +1,32 @@
-<template>
-  <div id='terminal' ref='terminal'></div>
+<template :style = "{minWidth: '100%'}">
+  <div id='terminal' ref='terminal'
+       class = "container
+                m-1 mb-2 mt-4
+                overflow-scroll
+                text-start
+                bg-black
+                "
+  ></div>
 </template>
 
 <script>
 export default {
   name: "Terminal",
+  data() {
+    return {
+      _lastDiv : undefined
+    }
+  },
   methods: {
-    output(message) {
+    outputLine(message) {
       this.newDiv(message, 'white')
+    },
+    output(message) {
+      if (this._lastDiv === undefined) {
+        this.outputLine()
+      } else {
+        this._lastDiv.innerText = this._lastDiv.innerText + message.toString()
+      }
     },
     warn(message) {
       this.newDiv(message, 'yellow')
@@ -17,7 +36,7 @@ export default {
     },
     newDiv(message, color) {
       const msg = document.createElement('div')
-      msg.innerText = message
+      msg.innerText = message.toString()
       msg.style.color = color;
       this.$refs['terminal'].appendChild(msg);
     },
@@ -41,10 +60,8 @@ export default {
 </script>
 
 <style scoped>
-#terminal {
-  background: black;
-  overflow: scroll;
-  width: 250px;
-  height: 100px;
-}
+  #terminal {
+    height: 100px;
+    width: 400px;
+  }
 </style>
