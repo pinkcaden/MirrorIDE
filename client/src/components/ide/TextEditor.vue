@@ -3,16 +3,16 @@ import {basicSetup} from 'codemirror'
 import {EditorView, lineNumbers} from '@codemirror/view'
 import {Compartment} from '@codemirror/state'
 import {oneDark} from '@codemirror/theme-one-dark';
-import debounceMaxWait from '../utils/debounceMaxWait.js'
+import debounceMaxWait from '../../utils/debounceMaxWait.js'
 
 const DEBOUNCE_TIME = 1000;
 const DEBOUNCE_MAX = 2500;
 
 const baseTheme = {
-  "&": {maxHeight: "600px", maxWidth: "400px"},
+  "&": {maxHeight: "600px", maxWidth: "300px"},
   ".cm-content, .cm-gutter": {minHeight: "600px"},
   ".cm-scroller": {overflow: "auto", height: "600px"},
-  ".cm-editor": {height: "600px", width: "400px"}
+  ".cm-editor": {height: "600px", width: "300px"}
 }
 
 async function getLang(lang) {
@@ -100,11 +100,10 @@ export default {
     this.editableCompartment = new Compartment()
     this.themeCompartment = new Compartment()
 
-    const debouncedUpdate =debounceMaxWait(this.setLastUpdate, DEBOUNCE_TIME, DEBOUNCE_MAX)
+    const debouncedUpdate = debounceMaxWait(this.setLastUpdate, DEBOUNCE_TIME, DEBOUNCE_MAX)
     const editWatch = EditorView.updateListener.of((update) => {
       if (update.docChanged)
       {
-
         debouncedUpdate()
       }
     })
@@ -123,7 +122,7 @@ export default {
 
 <template>
 
-  <div class="container-lg w-auto h-auto">
+  <div class="container-lg w-auto h-auto p-0">
     <div class="card border-2 border-black">
       <div id = editor ref="editor">
       </div>

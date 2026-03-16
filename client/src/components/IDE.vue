@@ -15,7 +15,7 @@
             <div class="row ps-4">
               <TextEditor ref="cssEditor" v-if="css" v-bind:lang-choice="'css'"
                           v-show="this.currentLanguage === 'css'"></TextEditor>
-              <TextEditor ref="htmlEditor" v-bind:lang-choice="'html'" v-if="this.isStolen"
+              <TextEditor ref="htmlEditor" v-if="html" v-bind:lang-choice="'html'"
                           v-show="this.currentLanguage === 'html'"></TextEditor>
               <TextEditor ref="jsEditor" v-if="js" v-bind:lang-choice="'js'"
                           v-show="this.currentLanguage === 'js'"></TextEditor>
@@ -24,15 +24,19 @@
           </div>
         </div>
           <div class="col m-0 p-0">
-            <div class="container bg-white h-100">
-              <div class="row col-">
-                  <label for="darkBtn" class="p-1 m-1 form-check-input">Dark Mode </label>
-                  <input type="checkbox" id="darkBtn" v-model="this.darkMode" class="form-check"/>
+            <div class="container bg-white h-100 ">
+              <div class="row ">
+                <div class="form-check text-black bg-secondary-subtle" >
+                  <input  class="form-check-input" v-model= "darkMode" type="checkbox" id="darkModeCheck">
+                  <label class="form-check-label" for="darkModeCheck">
+                    Dark Mode
+                  </label>
+                </div>
               </div>
-              <div class="row row-cols-4">
+              <div class="row justify-content-center">
                 <RunButton :parentRun="this.handleRun"></RunButton>
               </div>
-              <div class="row row-cols-6">
+              <div class="row justify-content-center">
                 <Terminal ref="terminal"></Terminal>
               </div>
             </div>
@@ -44,46 +48,34 @@
 </template>
 
 <script>
-import TextEditor from './TextEditor.vue'
-import Terminal from './Terminal.vue'
+import TextEditor from './ide/TextEditor.vue'
+import Terminal from './ide/Terminal.vue'
+import RunButton from './ide/RunButton.vue';
+import {JSNcompile} from '../utils/javaSnake.js'
 
 const BUTTON_COLORS = {
   'js': {selected: "#F7ECBE", unselected: "#EDBF2D"},
   'css': {selected: "#D5E4ED", unselected: "#2687D1"},
   'html': {selected: "#E3D0B6", unselected: "#D98114"}
 }
-
-
 export default {
   components: {
-    TextEditor,
-    Terminal
+    RunButton, TextEditor, Terminal
   },
   data() {
     return {
-      currentLanguage: String,
+      currentLanguage: undefined,
       _languages: {},
       _stolenDocs: undefined,
       isStolen: false,
-      darkMode: false
+      darkMode: false,
+      _running: false
     }
   },
   props: {
-    js: {
-      type: Boolean,
-      default: false,
-      readonly: true
-    },
-    css: {
-      type: Boolean,
-      default: false,
-      readonly: true
-    },
-    html: {
-      type: Boolean,
-      default: false,
-      readonly: true
-    }
+    js: {type: Boolean, default: false, readonly: true},
+    css: {type: Boolean, default: false, readonly: true},
+    html: {type: Boolean, default: false, readonly: true}
   },
   mounted() {
     if (this.js) {
@@ -102,7 +94,7 @@ export default {
   },
   watch: {
     currentLanguage(newValue, oldValue) {
-      if (typeof oldValue === 'function') {
+      if (oldValue === undefined) {
         for (const lang of Object.values(this._languages)) {
           lang.button.style.background = lang.unselected
           lang.button.style.fontWeight = 'normal'
@@ -117,24 +109,41 @@ export default {
       newLang.button.style.fontWeight = 'bold'
     },
     darkMode(newValue) {
-      for (const lang of Object.values(this._languages)){
+      for (const lang of Object.values(this._languages)) {
         lang.editor.setDarkMode(newValue)
       }
     }
   },
-
   methods: {
-    _popUpConfirmation(message) {
-      return confirm(message)
+    async handleRun() {
+      if (!this._running) {
+        const terminal = this.$refs['terminal']
+        const source = this.$refs.jsEditor.getText()
+        terminal.clear()
+
+        this._running = true
+
+        terminal.outputLine('Running code')
+        await new Promise(r => setTimeout(r, 0))
+        setTimeout(() => {
+          const [compiledStatus, compiledCode] = JSNcompile(source)
+          if (compiledStatus) {
+            terminal.outputLine('Compiled successfully')
+          }
+        }, 2000)
+
+      }
+
+      return 0
     },
-    requestSteal(){
+    requestSteal() {
       if (!this.isStolen) {
         const confirmation = this._popUpConfirmation('Instructor wants to edit. Allow?')
         if (confirmation) {
           this._stolenDocs = {}
           for (const [key, value] of Object.entries(this._languages)) {
             value.editor.setEditable(false)
-            this._stolenDocs[key] = value.getText()
+            this._stolenDocs[key] = value.editor.getText()
           }
           this.isStolen = true
           return true
@@ -145,12 +154,18 @@ export default {
     relinquishSteal(newTexts) {
       if (this.isStolen) {
         const confirmation = this._popUpConfirmation("Save instructor's edits?")
+        const times = {}
+        for (const [key, value] of Object.entries(this._languages)) {
+          times[key] = value.editor.lastEdit
+        }
         if (confirmation) {
           this.setTexts(newTexts)
         } else {
           this.setTexts(this._stolenDocs)
         }
-        for (const value of Object.values(this._languages)) {
+        this._stolenDocs = {}
+        for (const [key, value] of Object.entries(this._languages)) {
+          value.editor.lastEdit = times[key]
           value.editor.setEditable(true)
         }
         this.isStolen = false
@@ -173,25 +188,26 @@ export default {
       return texts
     },
     setTexts(texts) {
-      for (const lang of Object.keys(texts)) {
-        this._languages[lang].editor.rewriteText(texts[lang])
+      const availableLanguages = Object.keys(this._languages)
+      for (const [key, value] of Object.entries(texts)) {
+        if (availableLanguages.includes(key)) {
+          this._languages[key].editor.rewriteText(value)
+        }
       }
+    },
+    _popUpConfirmation(message) {
+      return confirm(message)
     }
   }
-
 }
-
 </script>
 
 
 <style scoped>
-
-
-.editorBtn {
+.langBtn {
   border-radius: 0;
   width: 25%;
   height: 100%;
   margin: 0;
 }
-
 </style>
