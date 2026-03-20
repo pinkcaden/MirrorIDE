@@ -1,54 +1,32 @@
+import extractStrings from './extractStrings.js'
+import parseBrackets from './parseBrackets.js'
 
-
-
-
-function parseBrackets(statement) {
-
-    const ret = {
-        statements: [],
-        isValid: false,
-        error: null
-    }
-    const matches = []
-
-    const pairs = {
-        '(' : ')',
-        '{' : '}',
-        '[' : ']'
-
-    }
-    const stack = []
-    let last = { index: -1, type: null}
-
-    for (let i = 0; i < statement.length; i++) {
-        const char = statement.charAt(i)
-        if (pairs[char]) {
-            stack.push({type: char, index: i})
-        }
-        else if (Object.values(pairs).includes(char)) {
-            last = stack.pop()
-            if (!last.type || char !== pairs[last.type]) {
-                ret.error = "Closing bracket does not correlate to correct opening bracket."
-                return ret
-            } else {
-                ret.statements.push(statement.substring(last.index, i + 1))
-            }
-        }
-    }
-    if (stack.length !==  0) {
-        ret.error = "Opening bracket does not correlate to correct opening bracket."
-        return ret
-    }
-    ret.isValid = true
-    return ret
+String.prototype.replaceAt = function (target, replacement) {
+    const start = this.indexOf(target)
+    const end = start + target.length
+    return this.substring(0, start - 1) + replacement + this.substring(end + 1, this.length)
 }
-
 
 export function JSNcompile(source){
-    const statements = source.toString().split(";")
-    return [true, 'compiled :' + source.toString()];
+    const compileData = {strings: {}}
+    let compiledCode = source
+    const strings = extractStrings(source)
+
+    let id = 0;
+    for (const string of strings) {
+        const strId = "__STR" + id + "__"
+        compileData.strings[strId] = string.value
+        compiledCode = compiledCode.replaceAt(string.value, strId)
+        id++
+    }
+    const statements = 
+
+    return [true, statements, compileData]
+
 }
 
-export function JSNrun(source) {
-
+export async function* JSNrun(statements) {
+    for (const statement of statements) {
+        yield ({type: "outputLine", message: statement.toUpperCase()})
+    }
 }

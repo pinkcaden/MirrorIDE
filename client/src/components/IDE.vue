@@ -23,27 +23,29 @@
             <div/>
           </div>
         </div>
-          <div class="col m-0 p-0">
-            <div class="container bg-white h-100 ">
-              <div class="row ">
-                <div class="form-check text-black bg-secondary-subtle" >
-                  <input  class="form-check-input" v-model= "darkMode" type="checkbox" id="darkModeCheck">
+        <div class="col m-0 p-0">
+          <div class="container bg-white h-100 ">
+            <div class="row ">
+              <div class="text-black bg-secondary-subtle p-2">
+                <div class="form-check">
                   <label class="form-check-label" for="darkModeCheck">
                     Dark Mode
                   </label>
+                  <input class="form-check-input" v-model="darkMode" type="checkbox" id="darkModeCheck">
                 </div>
               </div>
-              <div class="row justify-content-center">
-                <RunButton :parentRun="this.handleRun"></RunButton>
-              </div>
-              <div class="row justify-content-center">
-                <Terminal ref="terminal"></Terminal>
-              </div>
+            </div>
+            <div class="row justify-content-center">
+              <RunButton ref = "runButton" :parentRun="this.handleRun"></RunButton>
+            </div>
+            <div class="row justify-content-center">
+              <Terminal ref="terminal"></Terminal>
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
 </template>
 
@@ -51,7 +53,7 @@
 import TextEditor from './ide/TextEditor.vue'
 import Terminal from './ide/Terminal.vue'
 import RunButton from './ide/RunButton.vue';
-import {JSNcompile} from '../utils/javaSnake.js'
+import {JSNcompile, JSNrun} from '../utils/javaSnake.js'
 
 const BUTTON_COLORS = {
   'js': {selected: "#F7ECBE", unselected: "#EDBF2D"},
@@ -116,25 +118,38 @@ export default {
   },
   methods: {
     async handleRun() {
-      if (!this._running) {
-        const terminal = this.$refs['terminal']
-        const source = this.$refs.jsEditor.getText()
-        terminal.clear()
-
-        this._running = true
-
-        terminal.outputLine('Running code')
-        await new Promise(r => setTimeout(r, 0))
-        setTimeout(() => {
-          const [compiledStatus, compiledCode] = JSNcompile(source)
-          if (compiledStatus) {
-            terminal.outputLine('Compiled successfully')
-          }
-        }, 2000)
-
+      if (this._running) return
+      const terminal = this.$refs['terminal']
+      const source = this.$refs.jsEditor.getText().toString()
+      const runButton = this.$refs.runButton
+      terminal.clear()
+      this._running = true
+      terminal.outputLine('Running code')
+      const [compiledStatus, compiledCode] = JSNcompile(source)
+      if (!compiledStatus) {
+        terminal.warn("Failed to compile: " + compiledCode[compiledCode.length])
+        this._running = false
+        runButton.endRun()
+        return
       }
-
-      return 0
+      const outPutGenerator = JSNrun(compiledCode)
+      for await (const output of outPutGenerator) {
+        this.$nextTick
+        if (output.type === 'outputLine') {
+          terminal.outputLine(output.message)
+        } else if (output.type === 'error') {
+          terminal.error(output.message)
+          this._running = false
+          runButton.endRun()
+          return
+        } else if (output.type === 'output') {
+          terminal.output(output.message)
+        } else if (output.type === 'warn') {
+          terminal.warn(output.message)
+        }
+      }
+      this._running = false
+      runButton.endRun()
     },
     requestSteal() {
       if (!this.isStolen) {
@@ -198,6 +213,8 @@ export default {
     _popUpConfirmation(message) {
       return confirm(message)
     }
+
+
   }
 }
 </script>

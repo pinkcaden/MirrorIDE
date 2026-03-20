@@ -23,7 +23,7 @@ export default {
     },
     output(message) {
       if (this._lastDiv === undefined) {
-        this.outputLine()
+        this.outputLine(message)
       } else {
         this._lastDiv.innerText = this._lastDiv.innerText + message.toString()
       }
