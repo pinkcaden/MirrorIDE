@@ -38,6 +38,7 @@
             <div class="row justify-content-center">
               <RunButton ref = "runButton" :parentRun="this.handleRun"></RunButton>
             </div>
+            <div ref = "screen"></div>
             <div class="row justify-content-center">
               <Terminal ref="terminal"></Terminal>
             </div>
@@ -53,7 +54,7 @@
 import TextEditor from './ide/TextEditor.vue'
 import Terminal from './ide/Terminal.vue'
 import RunButton from './ide/RunButton.vue';
-import {JSNcompile, JSNrun} from '../utils/javaSnake.js'
+import Executor from '../utils/execution/evalExecute.js'
 
 const BUTTON_COLORS = {
   'js': {selected: "#F7ECBE", unselected: "#EDBF2D"},
@@ -71,7 +72,8 @@ export default {
       _stolenDocs: undefined,
       isStolen: false,
       darkMode: false,
-      _running: false
+      _running: false,
+      _executor: undefined
     }
   },
   props: {
@@ -93,6 +95,7 @@ export default {
       this.currentLanguage = lang
     }
     this.currentLanguage = Object.keys(this._languages)[0]
+    this._executor = new Executor(this.$refs["screen"], this.$refs["terminal"])
   },
   watch: {
     currentLanguage(newValue, oldValue) {
@@ -121,35 +124,11 @@ export default {
       if (this._running) return
       const terminal = this.$refs['terminal']
       const source = this.$refs.jsEditor.getText().toString()
-      const runButton = this.$refs.runButton
+      const runButton = this.$refs['runButton']
       terminal.clear()
       this._running = true
-      terminal.outputLine('Running code')
-      const [compiledStatus, compiledCode] = JSNcompile(source)
-      if (!compiledStatus) {
-        terminal.warn("Failed to compile: " + compiledCode[compiledCode.length])
-        this._running = false
-        runButton.endRun()
-        return
-      }
-      const outPutGenerator = JSNrun(compiledCode)
-      for await (const output of outPutGenerator) {
-        this.$nextTick
-        if (output.type === 'outputLine') {
-          terminal.outputLine(output.message)
-        } else if (output.type === 'error') {
-          terminal.error(output.message)
-          this._running = false
-          runButton.endRun()
-          return
-        } else if (output.type === 'output') {
-          terminal.output(output.message)
-        } else if (output.type === 'warn') {
-          terminal.warn(output.message)
-        }
-      }
+      terminal.log('Running code')
       this._running = false
-      runButton.endRun()
     },
     requestSteal() {
       if (!this.isStolen) {

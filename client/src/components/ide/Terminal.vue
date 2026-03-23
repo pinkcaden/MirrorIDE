@@ -18,8 +18,8 @@ export default {
     }
   },
   methods: {
-    outputLine(message) {
-      this.newDiv(message, 'white')
+    log(message) {
+      this._newDiv(message, 'white')
     },
     output(message) {
       if (this._lastDiv === undefined) {
@@ -29,12 +29,12 @@ export default {
       }
     },
     warn(message) {
-      this.newDiv(message, 'yellow')
+      this._newDiv(message, 'yellow')
     },
     error(message) {
-      this.newDiv(message, 'red')
+      this._newDiv(message, 'red')
     },
-    newDiv(message, color) {
+    _newDiv(message, color) {
       const msg = document.createElement('div')
       msg.innerText = message.toString()
       msg.style.color = color;
@@ -52,7 +52,7 @@ export default {
     },
     setContents(contents) {
       for (const line of contents) {
-        this.newDiv(line[0], line[1])
+        this._newDiv(line[0], line[1])
       }
     }
   }

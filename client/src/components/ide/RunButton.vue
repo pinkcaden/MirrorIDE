@@ -1,58 +1,50 @@
 <script>
 
-import throttle from "../../utils/throttle.js";
+import throttle from "../../utils/timing/throttle.js";
 
 export default {
   name: "RunButton",
   props: {
     parentRun: {
       required: true,
-      validator : (value) => {return value instanceof Function}
+      validator: (value) => {
+        return value instanceof Function
+      }
     }
   },
-  data(){
+  data() {
     return {
       isRunning: false
     }
   },
   created() {
-    this.throttledRun = throttle(async () => {await this.parentRun()}, 1500)
+    this.throttledRun = throttle(async () => {
+      this.isRunning = true;
+      await this.parentRun();
+    }, 1500)
   },
   methods: {
     runClick() {
-      this.isRunning = true;
-      const ret = this.throttledRun()
+      if (!this.isRunning) {
+        const ret = this.throttledRun()
+      } else {
+        this.isRunning = false;
+      }
     },
     endRun() {
       this.isRunning = false;
     }
-  },
-  watch: {
-    isRunning(newValue){
-      const btn = this.$refs['run']
-      if(newValue){
-        btn.classList.remove("btn-success")
-        btn.classList.add("btn-danger")
-        btn.textContent = "Running code"
-
-      } else {
-        btn.classList.remove("btn-danger")
-        btn.classList.add("btn-success")
-        btn.textContent = "Run"
-
-      }
-
-    }
   }
-
 }
 </script>
 
 <template>
-  <button ref = "run"
-          type = "button"
-          class ="btn btn-success m-2 mt-4 w-50"
-          @click="runClick()">Run</button>
+  <button ref="run"
+          type="button"
+          :class="isRunning ? 'btn btn-danger m-2 mt-4 w-50'
+          : 'btn btn-success m-2 mt-4 w-50'"
+          @click="runClick()"> {{ isRunning ? "Stop execution" : "Run" }}
+  </button>
 </template>
 <style scoped>
 

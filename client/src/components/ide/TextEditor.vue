@@ -3,7 +3,7 @@ import {basicSetup} from 'codemirror'
 import {EditorView, lineNumbers} from '@codemirror/view'
 import {Compartment} from '@codemirror/state'
 import {oneDark} from '@codemirror/theme-one-dark';
-import debounceMaxWait from '../../utils/debounceMaxWait.js'
+import debounceMaxWait from '../../utils/timing/debounceMaxWait.js'
 
 const DEBOUNCE_TIME = 1000;
 const DEBOUNCE_MAX = 2500;

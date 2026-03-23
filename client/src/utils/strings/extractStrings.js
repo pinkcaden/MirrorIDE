@@ -25,11 +25,11 @@ export default function extractStrings(code) {
         } else {
             if (char === stringChar.value && !isEscaped(code, i)) {
                 inString = false
-                const start = stringChar.index + 1
+                const start = stringChar.index
                 strings.push({
-                    value: code.slice(stringChar.index + 1, i),
-                    start: start - 1,
-                    end: i
+                    value: code.slice(start, i + 1),
+                    start: start,
+                    end: i + 1
                 })
                 stringChar = null
             }
