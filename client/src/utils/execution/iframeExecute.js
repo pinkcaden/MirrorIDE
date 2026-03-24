@@ -1,3 +1,6 @@
+import isEscaped from '../../utils/strings/isEscaped.js'
+
+
 export default class Executor {
     logOverwrite;
     uuid;
@@ -27,6 +30,19 @@ export default class Executor {
         this.iframe.srcdoc = `<script>${this.logOverwrite}</script>`
         parent.appendChild(this.iframe)
     }
+
+    compile(code) {
+        if (code.js) {
+            let source = code.js.toString();
+            const noStrings = source.replace(/(["'`])(?:\\.|(?!\1).)*\1/g, '');
+            if (/\bimport\b/.test(noStrings)){return [false, "Imports not allowed in MirrorIDE"]}
+            return [true, "code compiled"]
+
+            }
+        }
+
+
+
 
 
     run(code) {

@@ -145,9 +145,17 @@ export default {
       const runButton = this.$refs['runButton']
       terminal.clear()
       this._running = true
-      this._executor.run(this.getTexts())
+      const code = this.getTexts()
+      console.log(code)
+      const compileResults = this._executor.compile(code)
+      if (!compileResults[0]){
+        terminal.error(compileResults[1])
+        return
+      }
+      this._executor.run(code)
       terminal.log('Running code')
       this._running = false
+      runButton.endRun()
     },
     requestSteal() {
       if (!this.isStolen) {
