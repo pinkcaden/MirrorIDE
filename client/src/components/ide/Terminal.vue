@@ -19,6 +19,7 @@ export default {
   },
   methods: {
     log(message) {
+      console.log(message)
       this._newDiv(message, 'white')
     },
     output(message) {

@@ -54,7 +54,7 @@
 import TextEditor from './ide/TextEditor.vue'
 import Terminal from './ide/Terminal.vue'
 import RunButton from './ide/RunButton.vue';
-import Executor from '../utils/execution/evalExecute.js'
+import Executor from '../utils/execution/iframeExecute.js'
 
 const BUTTON_COLORS = {
   'js': {selected: "#F7ECBE", unselected: "#EDBF2D"},
@@ -95,7 +95,9 @@ export default {
       this.currentLanguage = lang
     }
     this.currentLanguage = Object.keys(this._languages)[0]
-    this._executor = new Executor(this.$refs["screen"], this.$refs["terminal"])
+    this._executor = new Executor(this.$refs["screen"])
+    const bound = this._executor.applyListener
+    bound(this.handleLog, this)
   },
   watch: {
     currentLanguage(newValue, oldValue) {
@@ -120,6 +122,22 @@ export default {
     }
   },
   methods: {
+    handleLog(logObj){
+      if(logObj.level === 'log'){
+        for (const value of logObj.values){
+          this.$refs.terminal.log(value)
+        }
+      } else if(logObj.level === 'error'){
+        for (const value of logObj.values){
+          this.$refs.terminal.error(value)
+        }
+      } else if(logObj.level === 'warn') {
+        for (const value of logObj.values) {
+          this.$refs.terminal.warn(value)
+        }
+      }
+      },
+
     async handleRun() {
       if (this._running) return
       const terminal = this.$refs['terminal']
@@ -127,6 +145,7 @@ export default {
       const runButton = this.$refs['runButton']
       terminal.clear()
       this._running = true
+      this._executor.run(this.getTexts())
       terminal.log('Running code')
       this._running = false
     },
@@ -189,6 +208,14 @@ export default {
         }
       }
     },
+    getLineCount() {
+      let count = 0
+      for (const lang of Object.values(this._languages)){
+        count += lang.editor.getLineCount()
+      }
+      return count
+    },
+
     _popUpConfirmation(message) {
       return confirm(message)
     }

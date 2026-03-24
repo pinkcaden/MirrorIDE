@@ -91,7 +91,17 @@ export default {
           effects: this.themeCompartment.reconfigure([EditorView.theme({...baseTheme, "&" : {background : "white", color: "black", textAlign: "left"}})])
         })
       }
+    },
+    getLineCount(){
+      let count = 0;
+      this.getText().toString().split('\n').forEach(line => {
+        if (line.length > 0){
+          count++
+        }
+      })
+      return count
     }
+
   },
   async mounted() {
 
