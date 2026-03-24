@@ -10,7 +10,7 @@ const students = [
 ]
 const selectedStudent = ref(students[0]);
 const request = () => {
-  alert("Request sent to")
+  alert("Request sent")
 }
 </script>
 
