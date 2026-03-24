@@ -146,7 +146,6 @@ export default {
       terminal.clear()
       this._running = true
       const code = this.getTexts()
-      console.log(code)
       const compileResults = this._executor.compile(code)
       if (!compileResults[0]){
         terminal.error(compileResults[1])

@@ -47,7 +47,7 @@ export default {
       <button @click="transfer(1)">1 to 2</button>
       <button @click="transfer(0)">2 to 1</button>
     </div>
-    <div> 1 Lines: {{this.ide0Lines}} 1 Time: {{ this.ide0Time }} 2 Time: {{ this.ide1Time }} 2 Lines: {{this.ide0Lines}}</div>
+    <div> 1 Lines: {{this.ide0Lines}} ------ Time: {{ this.ide0Time }} -----  2 Time: {{ this.ide1Time }}   -----   2 Lines: {{this.ide0Lines}}</div>
     <IDE ref="ide0" v-bind:css=true v-bind:js=true v-bind:html=true></IDE>
     <IDE ref="ide1" v-bind:css=true v-bind:js=true v-bind:html=true></IDE>
   </div>
