@@ -58,7 +58,7 @@ io.on('connection', (socket) => {
 
     socket.on("createRoom", (roomName, instructorName, html, css, javascript, callback) => {
         const roomCode = generateRoomCode();
-        rooms[roomCode] = {roomName, instructorName, html, css, javascript, students: {}};
+        rooms[roomCode] = {roomName, instructorName, instructorID: socket.id, html, css, javascript, students: {}};
         joinRoom(roomCode, instructorName, "instructor", callback);
     });
 
