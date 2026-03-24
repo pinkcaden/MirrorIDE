@@ -9,6 +9,9 @@ const students = [
   {id: 4, name: 'Aidan', lines: 32, lastEdit: '16 seconds ago', status: 'idle'},
 ]
 const selectedStudent = ref(students[0]);
+const request = () => {
+  alert("Request sent to")
+}
 </script>
 
 <template>
@@ -40,7 +43,7 @@ const selectedStudent = ref(students[0]);
       </div>
 
       <div class="controls">
-        <button class="requestBtn">Request Edit Access</button>
+        <button @click="request" class="requestBtn">Request Edit Access</button>
       </div>
       <div class="editorWrapper">
         <TextEditor />

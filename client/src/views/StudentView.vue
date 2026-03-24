@@ -5,11 +5,11 @@ import TextEditor from "../components/TextEditor.vue";
 const editRequest = ref(true)
 const accept = () => {
   editRequest.value = false
-  console.log('accepted')
+  alert('Request accepted');
 }
 const decline = () => {
   editRequest.value = false
-  console.log('declined')
+  alert('Request declined');
 }
 </script>
 
