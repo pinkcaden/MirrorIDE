@@ -51,9 +51,9 @@
       <span v-if="state.shareIn.type === 'view'">Viewing </span>
       <span v-else-if="state.shareIn.type === 'edit'">Editing </span>
       {{state.shareIn.studentName}}'s Code.
-      <br>
+      <br><br>
       <button @click="disconnectViewCode()">Stop Viewing</button>
-      <br>
+      <br><br>
       <div class="code-boxes" >
         <label>
           Student html

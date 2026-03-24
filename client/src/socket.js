@@ -35,7 +35,7 @@ socket.on("connectViewCode", (shareID) => {
     sendViewCode();
     shareOutInterval = setInterval(sendViewCode, 1000);
 });
-socket.on("disconnectViewCode", (shareID) => {
+socket.on("disconnectViewCode", () => {
     state.shareOut = {};
     clearInterval(shareOutInterval);
 });

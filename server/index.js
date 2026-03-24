@@ -94,7 +94,7 @@ io.on('connection', (socket) => {
 
     socket.on("disconnectViewCode", (conID) => {
         console.log("disconnectViewCode", socket.id, conID);
-        socket.to(conID).emit("disconnectViewCode", socket.id);
+        socket.to(conID).emit("disconnectViewCode");
     });
 
     socket.on("sendViewCode", (shareID, code) => {
