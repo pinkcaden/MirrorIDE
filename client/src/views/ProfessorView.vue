@@ -9,9 +9,6 @@ const students = [
   {id: 4, name: 'Aidan', lines: 32, lastEdit: '16 seconds ago', status: 'idle'},
 ]
 const selectedStudent = ref(students[0]);
-const request = () => {
-  alert("Request sent")
-}
 </script>
 
 <template>
@@ -40,10 +37,6 @@ const request = () => {
         <span>Lines: {{ selectedStudent.lines }}</span>
         <span>Last edit: {{ selectedStudent.lastEdit }}</span>
         <span>Status: {{ selectedStudent.status }}</span>
-      </div>
-
-      <div class="controls">
-        <button @click="request" class="requestBtn">Request Edit Access</button>
       </div>
       <div class="editorWrapper">
         <TextEditor />

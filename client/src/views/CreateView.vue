@@ -45,8 +45,6 @@ export default {
             this.$refs.javascriptInput.checked,
             (err = undefined) => {
           if(!err) {
-            // const formatted = roomCode.slice(0, 3) + "-" + roomCode.slice(3);
-            // alert("Room created!\nCode: " + formatted);
             this.$router.push("/professor");
           } else {
             this.$refs.errorMsg.innerHTML = "Failed to create room. " + err;

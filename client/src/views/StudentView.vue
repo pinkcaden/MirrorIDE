@@ -3,14 +3,6 @@ import {ref} from 'vue'
 import TextEditor from "../components/TextEditor.vue";
 
 const editRequest = ref(true)
-const accept = () => {
-  editRequest.value = false
-  alert('Request accepted');
-}
-const decline = () => {
-  editRequest.value = false
-  alert('Request declined');
-}
 </script>
 
 <template>
@@ -23,10 +15,6 @@ const decline = () => {
 
     <div v-if="editRequest" class="requestBox">
       <p>Instructor wants to edit your code</p>
-      <div class="requestActions">
-        <button class="acceptBtn" @click="accept">Accept</button>
-        <button class="declineBtn" @click="decline">Decline</button>
-      </div>
     </div>
   </div>
 </template>
