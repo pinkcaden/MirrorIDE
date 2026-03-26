@@ -36,7 +36,7 @@ export default {
         const roomCode = this.$refs.findInput.value.replace(/-/g, '');
         joinRoom(roomCode, this.$refs.nameInput.value, (err = undefined) => {
           if(!err) {
-            this.$router.push("/student");
+            this.$router.push("/ide");
           } else {
             this.$refs.errorMsg.innerHTML = "Failed to create room. " + err;
           }

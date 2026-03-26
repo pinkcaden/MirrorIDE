@@ -35,15 +35,17 @@ function generateRoomCode() {
 
 io.on('connection', (socket) => {
     socket.name = "";
-    socket.room = "";
+    socket.roomCode = "";
 
     console.log('a user connected: ' + socket.id);
     socket.on('disconnect', () => {
         console.log('a user disconnected: ' + socket.id);
-    });
-
-    socket.on('chat message', (msg) => {
-        io.to(socket.room).emit('chat message', msg, socket.name);
+        if(socket.role === "student") {
+            delete rooms[socket.roomCode].students[socket.id];
+        } else if(socket.role === "instructor") {
+            //TODO destroy room data and disconnect students when instructor disconnects
+            //delete rooms[socket.roomCode];
+        }
     });
 
     socket.on("findRoom", (roomCode, callback) => {
@@ -51,32 +53,53 @@ io.on('connection', (socket) => {
     });
 
     socket.on('joinRoom', (roomCode, name, callback) => {
-        joinRoom(roomCode, name, callback);
+        joinRoom(roomCode, name, "student", callback);
     });
 
     socket.on("createRoom", (roomName, instructorName, html, css, javascript, callback) => {
         const roomCode = generateRoomCode();
-        rooms[roomCode] = {roomName, instructorName, html, css, javascript};
-        joinRoom(roomCode, instructorName, callback);
+        rooms[roomCode] = {roomName, instructorName, instructorID: socket.id, html, css, javascript, students: {}};
+        joinRoom(roomCode, instructorName, "instructor", callback);
     });
 
-    function joinRoom(roomCode, name, callback) {
+    function joinRoom(roomCode, name, role, callback) {
         try {
-            socket.leave(socket.room);
+            socket.leave(socket.roomCode);
             socket.name = name;
-            socket.room = roomCode;
+            socket.roomCode = roomCode;
+            socket.role = role;
             socket.join(roomCode);
-            console.log(socket.id + " joined room " + roomCode);
+            if(role === "student") {
+                rooms[roomCode].students[socket.id] = name;
+            }
+            console.log(role + " " + name + " joined room " + roomCode);
             callback();
         } catch (error) {
             callback(error);
         }
-
-        console.log(rooms[roomCode]);
     }
 
     socket.on("getConnectionInfo", (callback) => {
-        callback(socket.room, socket.name);
+        callback(socket.roomCode, rooms[socket.roomCode], socket.name, socket.role);
+    });
+
+    socket.on("getStudentList", (callback) => {
+        callback(rooms[socket.roomCode]?.students);
+    });
+
+    socket.on("connectViewCode", (conID) => {
+        console.log("connectViewCode", socket.id, conID);
+        socket.to(conID).emit("connectViewCode", socket.id);
+    });
+
+    socket.on("disconnectViewCode", (conID) => {
+        console.log("disconnectViewCode", socket.id, conID);
+        socket.to(conID).emit("disconnectViewCode");
+    });
+
+    socket.on("sendViewCode", (shareID, code) => {
+        console.log("sendViewCode", socket.id, socket.name, code);
+        socket.to(shareID).emit("sendViewCode", socket.id, socket.name, code);
     });
 });
 

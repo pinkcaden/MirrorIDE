@@ -7,14 +7,10 @@ import StudentView from '../views/StudentView.vue'
 import ProfessorView from '../views/ProfessorView.vue'
 
 const routes = [
-  {path: '/',
+  {
+    path: '/',
     name: 'join',
     component: JoinView
-  },
-  {
-    path: '/chat',
-    name: 'chat',
-    meta: {hideNavbar: true}
   },
   {
     path: '/create',
@@ -24,7 +20,7 @@ const routes = [
   {
     path: '/ide',
     name: 'ide',
-    component: IdeView,
+    component: FakeIDEView,
     meta: {hideNavbar: true}
   },
   {

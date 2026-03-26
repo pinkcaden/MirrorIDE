@@ -45,7 +45,7 @@ export default {
             this.$refs.javascriptInput.checked,
             (err = undefined) => {
           if(!err) {
-            this.$router.push("/professor");
+            this.$router.push("/ide");
           } else {
             this.$refs.errorMsg.innerHTML = "Failed to create room. " + err;
           }
