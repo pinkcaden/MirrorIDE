@@ -18,7 +18,7 @@ export default {
     }
   },
   methods: {
-    outputLine(message) {
+    log(message) {
       this.newDiv(message, 'white')
     },
     output(message) {
@@ -51,6 +51,7 @@ export default {
       return ret
     },
     setContents(contents) {
+      this.clear()
       for (const line of contents) {
         this.newDiv(line[0], line[1])
       }

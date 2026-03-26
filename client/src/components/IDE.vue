@@ -51,7 +51,6 @@
 import TextEditor from './ide/TextEditor.vue'
 import Terminal from './ide/Terminal.vue'
 import RunButton from './ide/RunButton.vue';
-import {JSNcompile} from '../utils/javaSnake.js'
 
 const BUTTON_COLORS = {
   'js': {selected: "#F7ECBE", unselected: "#EDBF2D"},
@@ -115,25 +114,7 @@ export default {
     }
   },
   methods: {
-    async handleRun() {
-      if (!this._running) {
-        const terminal = this.$refs['terminal']
-        const source = this.$refs.jsEditor.getText()
-        terminal.clear()
-
-        this._running = true
-
-        terminal.outputLine('Running code')
-        await new Promise(r => setTimeout(r, 0))
-        setTimeout(() => {
-          const [compiledStatus, compiledCode] = JSNcompile(source)
-          if (compiledStatus) {
-            terminal.outputLine('Compiled successfully')
-          }
-        }, 2000)
-
-      }
-
+    handleRun() {
       return 0
     },
     requestSteal() {
