@@ -1,27 +1,65 @@
 import { reactive } from "vue";
 import { io } from "socket.io-client";
 
-export const state = reactive({
-    connected: false,
-    code: {},
-    shareIn: {},
-    shareOut: {}
-});
-
 // "undefined" means the URL will be computed from the `window.location` object
 const URL = process.env.NODE_ENV === "production" ? undefined : "http://localhost:3000";
 
-export const socket = io(URL);
+const socket = io(URL);
 
+export function findRoom(roomCode, callback) {
+    socket.emit("findRoom", roomCode, callback);
+}
+
+export function joinRoom(roomCode, name, callback) {
+    socket.emit("joinRoom", roomCode, name, callback);
+}
+
+export function createRoom(roomName, instructorName, html, css, javascript, callback) {
+    socket.emit("createRoom", roomName, instructorName, html, css, javascript, callback);
+}
+
+
+//IDE state
+export const state = reactive({
+    code: {},
+    connectionInfo: null,
+    studentList: null,
+    shareIn: {},
+    shareOut: {},
+
+    getConnectionInfo() {
+        socket.emit("getConnectionInfo", (roomCode, room, name, role) => {
+            this.connectionInfo = { roomCode, room, name, role };
+        });
+    },
+
+    getStudentList() {
+        socket.emit("getStudentList", (studentList) => {
+            this.studentList = studentList;
+        });
+    },
+
+    connectViewCode(conID) {
+        if(this.shareIn.id) {
+            this.disconnectViewCode();
+        }
+        this.shareIn.id = conID;
+        socket.emit("connectViewCode", conID);
+    },
+
+    disconnectViewCode() {
+        socket.emit("disconnectViewCode", this.shareIn.id);
+        this.shareIn = {};
+    },
+
+    shareOutChange() {
+        this.shareOut.codeChanged = true;
+    }
+});
+
+
+//socket handlers
 let shareOutInterval = null;
-
-socket.on("connect", () => {
-    state.connected = true;
-});
-
-socket.on("disconnect", () => {
-    state.connected = false;
-});
 
 socket.on("connectViewCode", (shareID) => {
     state.shareOut = {id: shareID, type: "view", codeChanged: true};
@@ -35,6 +73,7 @@ socket.on("connectViewCode", (shareID) => {
     sendViewCode();
     shareOutInterval = setInterval(sendViewCode, 1000);
 });
+
 socket.on("disconnectViewCode", () => {
     state.shareOut = {};
     clearInterval(shareOutInterval);
@@ -51,52 +90,3 @@ socket.on("sendViewCode", (fromID, fromName, code) => {
         state.shareIn.css = code.css;
     }
 });
-
-export function connectViewCode(conID) {
-    if(state.shareIn.id) {
-        disconnectViewCode();
-    }
-    state.shareIn.id = conID;
-    socket.emit("connectViewCode", conID);
-}
-
-export function disconnectViewCode() {
-    socket.emit("disconnectViewCode", state.shareIn.id);
-    state.shareIn = {};
-}
-
-export function findRoom(roomCode, callback) {
-    socket.emit("findRoom", roomCode, callback);
-}
-
-export function joinRoom(roomCode, name, callback) {
-    socket.emit("joinRoom", roomCode, name, callback);
-}
-
-export function createRoom(roomName, instructorName, html, css, javascript, callback) {
-    socket.emit("createRoom", roomName, instructorName, html, css, javascript, callback);
-}
-
-export async function getConnectionInfo() {
-    return new Promise((resolve) => {
-        socket.emit("getConnectionInfo", (roomCode, room, name, role) => {
-            resolve({ roomCode, room, name, role });
-        });
-    });
-}
-
-export async function getStudentList() {
-    return new Promise((resolve) => {
-        socket.emit("getStudentList", (studentList) => {
-            resolve(studentList);
-        });
-    });
-}
-
-export async function getStudentCode(studentID) {
-    return new Promise((resolve) => {
-        socket.emit("getStudentCode", studentID, (studentCode) => {
-            resolve(studentCode);
-        });
-    });
-}

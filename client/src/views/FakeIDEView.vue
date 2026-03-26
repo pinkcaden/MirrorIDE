@@ -1,21 +1,21 @@
 <template>
   <div id="ide">
-    <div id="roomCode" v-if="connectionInfo">
-      Room code: {{ connectionInfo.roomCode }}<br>
-      Room name: {{connectionInfo.room['roomName']}}<br>
-      Instructor name: {{connectionInfo.room['instructorName']}}<br>
-      Your name: {{connectionInfo.name}}<br>
-      Your role: {{connectionInfo.role}}<br>
-      Languages: <span v-if="connectionInfo.room['html']">HTML </span><span v-if="connectionInfo.room['javascript']">JS </span><span v-if="connectionInfo.room['css']">CSS</span>
+    <div id="roomCode" v-if="state.connectionInfo">
+      Room code: {{ state.connectionInfo.roomCode }}<br>
+      Room name: {{state.connectionInfo.room['roomName']}}<br>
+      Instructor name: {{state.connectionInfo.room['instructorName']}}<br>
+      Your name: {{state.connectionInfo.name}}<br>
+      Your role: {{state.connectionInfo.role}}<br>
+      Languages: <span v-if="state.connectionInfo.room['html']">HTML </span><span v-if="state.connectionInfo.room['javascript']">JS </span><span v-if="state.connectionInfo.room['css']">CSS</span>
       <br><br>
 
-      <div v-if="connectionInfo.role === 'instructor'">
-        <button @click="this.toggleStudentList()">Toggle Student List</button>
+      <div v-if="state.connectionInfo.role === 'instructor'">
+        <button @click="toggleStudentList()">Toggle Student List</button>
         <br><br>
-        <div v-if="showStudentList && studentList">
-          <div v-if="Object.keys(studentList).length > 0" id="student-list">
+        <div v-if="showStudentList && state.studentList">
+          <div v-if="Object.keys(state.studentList).length > 0" id="student-list">
             Student List:
-            <div class="list-item" v-for="(student, id) in studentList"> {{student}} <button @click="connectViewCode(id)">View Code</button></div>
+            <div class="list-item" v-for="(student, id) in state.studentList"> {{student}} <button @click="state.connectViewCode(id)">View Code</button></div>
           </div>
           <div v-else>No students currently in session.</div>
           <br>
@@ -30,29 +30,29 @@
       Your instructor is viewing your code.
       <br><br>
     </div>
-    <div class="code-boxes" v-if="connectionInfo">
+    <div class="code-boxes" v-if="state.connectionInfo">
       <br>
-      <label v-if="connectionInfo.room['html']">
+      <label v-if="state.connectionInfo.room['html']">
         html
-        <input id="htmlBox" ref="htmlBox" type="text" v-model="state.code.html" @input="shareOutChange()"/>
+        <input id="htmlBox" ref="htmlBox" type="text" v-model="state.code.html" @input="state.shareOutChange()"/>
       </label>
-      <label v-if="connectionInfo.room['javascript']">
+      <label v-if="state.connectionInfo.room['javascript']">
         js
-        <input id="jsBox" ref="jsBox" type="text" v-model="state.code.javascript" @input="shareOutChange()"/>
+        <input id="jsBox" ref="jsBox" type="text" v-model="state.code.javascript" @input="state.shareOutChange()"/>
       </label>
-      <label v-if="connectionInfo.room['css']">
+      <label v-if="state.connectionInfo.room['css']">
         css
-        <input id="cssBox" ref="cssBox" type="text" v-model="state.code.css" @input="shareOutChange()"/>
+        <input id="cssBox" ref="cssBox" type="text" v-model="state.code.css" @input="state.shareOutChange()"/>
       </label>
     </div>
 
-    <div v-if="connectionInfo && state.shareIn.type">
+    <div v-if="state.connectionInfo && state.shareIn.type">
       <br>
       <span v-if="state.shareIn.type === 'view'">Viewing </span>
       <span v-else-if="state.shareIn.type === 'edit'">Editing </span>
       {{state.shareIn.studentName}}'s Code.
       <br><br>
-      <button @click="disconnectViewCode()">Stop Viewing</button>
+      <button @click="state.disconnectViewCode()">Stop Viewing</button>
       <br><br>
       <div class="code-boxes" >
         <label>
@@ -73,7 +73,7 @@
 </template>
 
 <script>
-import { state, getConnectionInfo, getStudentList, connectViewCode, disconnectViewCode } from "../socket";
+import { state } from "../socket";
 
 export default {
   name: "FakeIDEView",
@@ -81,16 +81,13 @@ export default {
   data() {
     return {
       state: state,
-      connectViewCode: connectViewCode,
-      disconnectViewCode: disconnectViewCode,
-      connectionInfo: null,
-      studentList: null,
+
       showStudentList: false
     };
   },
 
   async mounted() {
-    this.connectionInfo = await getConnectionInfo();
+    this.state.getConnectionInfo();
   },
 
   methods: {
@@ -98,12 +95,9 @@ export default {
       if(this.showStudentList) {
         this.showStudentList = false;
       } else {
-        this.studentList = await getStudentList();
+        this.state.getStudentList();
         this.showStudentList = true;
       }
-    },
-    shareOutChange() {
-      state.shareOut.codeChanged = true;
     }
   }
 };
