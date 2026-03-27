@@ -1,6 +1,6 @@
 <script setup>
 import {ref} from 'vue'
-import TextEditor from "../components/TextEditor.vue";
+import TextEditor from "../components/ide/TextEditor.vue";
 
 const editRequest = ref(true)
 </script>

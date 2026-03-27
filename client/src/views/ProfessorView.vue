@@ -1,5 +1,5 @@
 <script setup>
-import TextEditor from "../components/TextEditor.vue";
+import TextEditor from "../components/ide/TextEditor.vue";
 import {ref} from "vue";
 
 const students = [
