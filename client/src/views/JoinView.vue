@@ -1,23 +1,25 @@
 <template>
-  <div class="join-box">
-    <form ref="findForm" action="">
-      <h1>Join Room</h1>
-      <label>
-        Enter room code:
-        <input ref="findInput" id="findInput" autocomplete="off" placeholder="000-000" type="text" />
-      </label>
-      <button ref="findRoomButton">Find Room</button>
-      <div ref="roomFoundMsg" id="roomFoundMsg"></div>
-      <br>
-    </form>
-    <form ref="nameForm" action="" style="display: none;">
-      <label>
-        Enter your name:
-        <input ref="nameInput" autocomplete="off" placeholder="name" type="text"/>
-      </label>
-      <button>Join Room</button>
-    </form>
-    <div ref="errorMsg" id="errorMsg" style="color: red;"></div>
+  <div class="join-page">
+    <div class="join-box">
+      <form ref="findForm" action="">
+        <h1>Join Room</h1>
+        <label>
+          Enter room code:
+          <input ref="findInput" id="findInput" autocomplete="off" placeholder="000-000" v-model="formattedValue" @input="formatInput" type="text"/>
+        </label>
+        <button ref="findRoomButton">Find Room</button>
+        <div ref="roomFoundMsg" id="roomFoundMsg"></div>
+        <br>
+      </form>
+      <form ref="nameForm" action="" style="display: none;">
+        <label>
+          Enter your name:
+          <input ref="nameInput" autocomplete="off" placeholder="name" type="text"/>
+        </label>
+        <button>Join Room</button>
+      </form>
+      <div ref="errorMsg" id="errorMsg" style="color: red;"></div>
+    </div>
   </div>
 </template>
 
@@ -31,9 +33,10 @@ export default {
       event.stopPropagation();
       event.preventDefault();
       if (this.$refs.nameInput.value) {
-        joinRoom(this.$refs.findInput.value, this.$refs.nameInput.value, (err = undefined) => {
+        const roomCode = this.$refs.findInput.value.replace(/-/g, '');
+        joinRoom(roomCode, this.$refs.nameInput.value, (err = undefined) => {
           if(!err) {
-            this.$router.push("/chat");
+            this.$router.push("/ide");
           } else {
             this.$refs.errorMsg.innerHTML = "Failed to create room. " + err;
           }
@@ -45,7 +48,8 @@ export default {
       event.stopPropagation();
       event.preventDefault();
       if(this.$refs.findInput.value) {
-        findRoom(this.$refs.findInput.value, (foundRoom) => {
+        const roomCode = this.$refs.findInput.value.replace(/-/g, '');
+        findRoom(roomCode, (foundRoom) => {
           if(foundRoom) {
             this.$refs.roomFoundMsg.innerHTML = 'Joining "' + foundRoom["roomName"] + '" with ' + foundRoom["instructorName"];
             this.$refs.roomFoundMsg.style.color = "green";
@@ -59,45 +63,119 @@ export default {
         });
       }
     });
+  },
+  data() {
+    return {
+      formattedValue: ''
+    };
+  },
+  methods: {
+    formatInput(event) {
+      let value = event.target.value;
+      let alphaNumeric = value.replace(/[^a-zA-Z0-9]/g, '');
+      let limited = alphaNumeric.slice(0,6);
+      let formatted = limited.replace(/(.{3})(?=[^\s])/g, '$1-');
+      this.formattedValue = formatted;
+      event.target.value = formatted;
+    }
   }
 }
 </script>
-
 <style scoped>
-
-form {
-  background: rgba(0, 0, 0, 0.15);
+.join-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+.join-box {
+  width: min(900px, 92vw);
+  min-height: 520px;
+  border: 1px solid #333;
+  border-radius: 28px;
+  padding: 3rem 3.5rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  justify-content: center;
 }
-input[type='text'] {
-  border: none;
-  padding: 0 1rem;
-  margin: 0.25rem;
-  height: 1.5rem;
+
+.join-box h1 {
+  font-size: clamp(3rem, 6vw, 5rem);
+  margin: 0 0 1.25rem 0;
+  text-align: center;
 }
-form > button {
-  background: #333;
-  border: none;
-  padding: 0 1rem;
-  margin: 0.25rem;
-  border-radius: 3px;
-  outline: none;
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: transparent;
+}
+
+label {
+  display: block;
+  font-size: 1.1rem;
+  text-align: left;
+  margin-bottom: 0.25rem;
+}
+.join-box input[type="text"] {
+  width: 100%;
+  height: 72px;
+  background: #141414;
   color: #fff;
-  height: 2rem;
+  border: 1px solid #333;
+  border-radius: 18px;
+  padding: 0 1.25rem;
+  outline: none;
+  box-sizing: border-box;
+  font-size: 1.15rem;
+  margin: 0;
+}
+.join-box input[type="text"]:focus {
+  border-color: #2b7cff;
+  box-shadow: 0 0 0 3px rgba(43, 124, 255, 0.15);
+}
+.join-box button {
+  width: 180px;
+  height: 60px;
+  background: #161616;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  font-size: 1rem;
+  margin-top: 0.75rem;
+}
+.join-box button:hover {
+  background: #1f1f1f;
+  border-color: #444;
 }
 form > button:disabled {
   background: #151515;
   color: #aaa;
 }
-label {
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-}
-
-#roomFoundMsg, #errorMsg {
+#roomFoundMsg,
+#errorMsg {
   text-align: left;
+  margin-top: 0.75rem;
+}
+@media (max-width: 700px) {
+  .join-box {
+    padding: 2rem 1.5rem;
+    min-height: auto;
+  }
+
+  .join-box h1 {
+    font-size: 2.5rem;
+  }
+
+  .join-box input[type="text"] {
+    height: 60px;
+  }
+
+  .join-box button {
+    width: 100%;
+  }
 }
 </style>

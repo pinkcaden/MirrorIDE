@@ -3,16 +3,14 @@ import JoinView from '../views/JoinView.vue'
 import CreateView from '../views/CreateView.vue'
 import IdeView from '../views/CreateView.vue'
 import OfflineView from '../views/OfflineView.vue'
+import StudentView from '../views/StudentView.vue'
+import ProfessorView from '../views/ProfessorView.vue'
 
 const routes = [
-  {path: '/',
+  {
+    path: '/',
     name: 'join',
     component: JoinView
-  },
-  {
-    path: '/chat',
-    name: 'chat',
-    meta: {hideNavbar: true}
   },
   {
     path: '/create',
@@ -22,13 +20,25 @@ const routes = [
   {
     path: '/ide',
     name: 'ide',
-    component: IdeView,
+    component: FakeIDEView,
     meta: {hideNavbar: true}
   },
   {
       path: '/offline',
       name: 'offline',
       component: OfflineView
+  },
+  {
+      path: '/student',
+      name: 'student',
+      component: StudentView,
+      meta: {hideNavbar: true}
+  },
+  {
+      path: '/professor',
+      name: 'professor',
+      component: ProfessorView,
+      meta: {hideNavbar: true}
   }
 ]
 
