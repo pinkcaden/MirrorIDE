@@ -6,6 +6,9 @@ const URL = process.env.NODE_ENV === "production" ? undefined : "http://localhos
 
 const socket = io(URL);
 
+let sendCodeViewInterval = null;
+let sendCodeEditInterval = null;
+
 export function findRoom(roomCode, callback) {
     socket.emit("findRoom", roomCode, callback);
 }
@@ -18,14 +21,14 @@ export function createRoom(roomName, instructorName, html, css, javascript, call
     socket.emit("createRoom", roomName, instructorName, html, css, javascript, callback);
 }
 
-
 //IDE state
 export const state = reactive({
-    code: {},
     connectionInfo: null,
     studentList: null,
-    shareIn: {},
-    shareOut: {},
+    shareInView: {},
+    shareOutView: {},
+    shareInEdit: {},
+    shareOutEdit: {},
 
     getConnectionInfo() {
         socket.emit("getConnectionInfo", (roomCode, room, name, role) => {
@@ -39,54 +42,119 @@ export const state = reactive({
         });
     },
 
-    connectViewCode(conID) {
-        if(this.shareIn.id) {
+    connectViewCode(conID, conName) {
+        if(this.shareInView.id) {
             this.disconnectViewCode();
         }
-        this.shareIn.id = conID;
+        if(this.shareOutEdit.id) {
+            this.disconnectEditCode();
+        }
+        this.shareInView.id = conID;
+        this.shareInView.name = conName;
         socket.emit("connectViewCode", conID);
     },
 
     disconnectViewCode() {
-        socket.emit("disconnectViewCode", this.shareIn.id);
-        this.shareIn = {};
+        socket.emit("disconnectViewCode", this.shareInView.id);
+        this.shareInView = {};
     },
 
-    shareOutChange() {
-        this.shareOut.codeChanged = true;
-    }
+    requestEditCode(conID, conName) {
+        if(this.shareInView.id) {
+            this.disconnectViewCode();
+        }
+        if(this.shareOutEdit.id) {
+            this.disconnectEditCode();
+        }
+        this.shareOutEdit.requestID = conID;
+        this.shareOutEdit.requestName = conName;
+        socket.emit("requestEditCode", conID);
+    },
+
+    connectEditCode() {
+        this.shareInEdit.id = this.shareInEdit.requestID;
+        delete this.shareInEdit.requestID;
+        socket.emit("connectEditCode", this.shareInEdit.id, this.shareOutView.code);
+    },
+
+    disconnectEditCode() {
+        socket.emit("disconnectEditCode", this.shareOutEdit.id);
+        this.shareOutEdit = {};
+        clearInterval(sendCodeEditInterval);
+    },
+
+    setShareOutViewCode(code) {
+        this.shareOutView.codeChanged = true;
+        this.shareOutView.code = code;
+    },
+
+    setShareOutEditCode(code) {
+        this.shareOutEdit.codeChanged = true;
+        this.shareOutEdit.code = code;
+    },
 });
-
-
-//socket handlers
-let shareOutInterval = null;
 
 socket.on("connectViewCode", (shareID) => {
-    state.shareOut = {id: shareID, type: "view", codeChanged: true};
-    clearInterval(shareOutInterval);
-    function sendViewCode() {
-        if(state.shareOut.codeChanged) {
-            socket.emit("sendViewCode", shareID, state.code);
-            state.shareOut.codeChanged = false;
+    state.shareOutView = {id: shareID, codeChanged: true};
+    clearInterval(sendCodeViewInterval);
+
+    function sendCodeView() {
+        if (state.shareOutView.codeChanged) {
+            socket.emit("sendCodeView", shareID, state.shareOutView.code);
+            state.shareOutView.codeChanged = false;
         }
     }
-    sendViewCode();
-    shareOutInterval = setInterval(sendViewCode, 1000);
+
+    sendCodeView();
+    sendCodeViewInterval = setInterval(sendCodeView, 1500);
 });
 
+//TODO what if viewee connection drops? need to disconnect viewer in this case. same for edit
 socket.on("disconnectViewCode", () => {
-    state.shareOut = {};
-    clearInterval(shareOutInterval);
+    state.shareOutView = {};
+    clearInterval(sendCodeViewInterval);
 });
 
-socket.on("sendViewCode", (fromID, fromName, code) => {
-    console.log("got code: ", code);
+socket.on("requestEditCode", (reqID) => {
+    state.shareInEdit.requestID = reqID;
+});
+
+socket.on("connectEditCode", (shareID, code) => {
+    if(state.shareOutEdit.requestID === shareID) {
+        state.shareOutEdit = {id: shareID, name: state.shareOutEdit.requestName, code: code, codeChanged: false};
+        clearInterval(sendCodeEditInterval);
+
+        function sendCodeEdit() {
+            if (state.shareOutEdit.codeChanged) {
+                socket.emit("sendCodeEdit", shareID, state.shareOutEdit.code);
+                state.shareOutEdit.codeChanged = false;
+            }
+        }
+
+        sendCodeEditInterval = setInterval(sendCodeEdit, 1500);
+    } else {
+        console.log("error: received connectEditCode from non-requested student");
+    }
+});
+
+socket.on("disconnectEditCode", () => {
+    state.shareInEdit = {};
+});
+
+socket.on("sendCodeView", (fromID, code) => {
     console.log(fromID);
-    if(state.shareIn.id === fromID) {
-        state.shareIn.type = "view";
-        state.shareIn.studentName = fromName;
-        state.shareIn.html = code.html;
-        state.shareIn.javascript = code.javascript;
-        state.shareIn.css = code.css;
+    console.log("got code to view: ", code);
+
+    if(state.shareInView.id === fromID) {
+        state.shareInView.code = code;
+    }
+});
+
+socket.on("sendCodeEdit", (fromID, code) => {
+    console.log(fromID);
+    console.log("got edited code: ", code);
+
+    if(state.shareInEdit.id === fromID) {
+        state.shareInEdit.code = code;
     }
 });

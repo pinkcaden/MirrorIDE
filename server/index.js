@@ -92,14 +92,34 @@ io.on('connection', (socket) => {
         socket.to(conID).emit("connectViewCode", socket.id);
     });
 
+    socket.on("requestEditCode", (reqID) => {
+        console.log("requestEditCode", socket.id, reqID);
+        socket.to(reqID).emit("requestEditCode", socket.id);
+    });
+
+    socket.on("connectEditCode", (conID, code) => {
+        console.log("connectEditCode", socket.id, conID, code);
+        socket.to(conID).emit("connectEditCode", socket.id, code);
+    });
+
+    socket.on("sendCodeView", (shareID, code) => {
+        console.log("sendCodeView", socket.id, code);
+        socket.to(shareID).emit("sendCodeView", socket.id, code);
+    });
+
+    socket.on("sendCodeEdit", (shareID, code) => {
+        console.log("sendCodeEdit", socket.id, code);
+        socket.to(shareID).emit("sendCodeEdit", socket.id, code);
+    });
+
     socket.on("disconnectViewCode", (conID) => {
         console.log("disconnectViewCode", socket.id, conID);
         socket.to(conID).emit("disconnectViewCode");
     });
 
-    socket.on("sendViewCode", (shareID, code) => {
-        console.log("sendViewCode", socket.id, socket.name, code);
-        socket.to(shareID).emit("sendViewCode", socket.id, socket.name, code);
+    socket.on("disconnectEditCode", (conID) => {
+        console.log("disconnectEditCode", socket.id, conID);
+        socket.to(conID).emit("disconnectEditCode");
     });
 });
 
