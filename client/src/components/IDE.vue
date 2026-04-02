@@ -13,11 +13,11 @@
             </div>
 
             <div class="row ps-4">
-              <TextEditor ref="cssEditor" v-if="css" v-bind:lang-choice="'css'"
-                          v-show="this.currentLanguage === 'css'"></TextEditor>
-              <TextEditor ref="htmlEditor" v-if="html" v-bind:lang-choice="'html'"
+              <TextEditor ref="cssEditor" v-if="css" v-bind:lang-choice="'css'" @share = "this.handleShare"
+                          v-show="this.currentLanguage === 'css'" ></TextEditor>
+              <TextEditor ref="htmlEditor" v-if="html" v-bind:lang-choice="'html'" :parentFunc = "this.handleShare"
                           v-show="this.currentLanguage === 'html'"></TextEditor>
-              <TextEditor ref="jsEditor" v-if="js" v-bind:lang-choice="'js'"
+              <TextEditor ref="jsEditor" v-if="js" v-bind:lang-choice="'js'" :parentFunc = "this.handleShare"
                           v-show="this.currentLanguage === 'js'"></TextEditor>
             </div>
             <div/>
@@ -74,7 +74,8 @@ export default {
   props: {
     js: {type: Boolean, default: false, readonly: true},
     css: {type: Boolean, default: false, readonly: true},
-    html: {type: Boolean, default: false, readonly: true}
+    html: {type: Boolean, default: false, readonly: true},
+    shareOutFunc: {type: Function, default: null, required: false, readonly: true}
   },
   mounted() {
     if (this.js) {
@@ -114,6 +115,9 @@ export default {
     }
   },
   methods: {
+    handleShare(){
+      this.shareOutFunc(this.getTexts())
+    },
     handleRun() {
       return 0
     },

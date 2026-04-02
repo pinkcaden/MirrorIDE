@@ -56,6 +56,10 @@ export default {
         return (value === 'js' || value === 'css' || value === 'html')
       }
     },
+    parentFunc: {
+      type: Function,
+      default: null
+    }
   },
 
   methods: {
@@ -100,13 +104,24 @@ export default {
     this.editableCompartment = new Compartment()
     this.themeCompartment = new Compartment()
 
+    let editWatch = undefined
     const debouncedUpdate = debounceMaxWait(this.setLastUpdate, DEBOUNCE_TIME, DEBOUNCE_MAX)
-    const editWatch = EditorView.updateListener.of((update) => {
+    if (this.parentFunc) {
+      editWatch = EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          this.parentFunc()
+          debouncedUpdate()
+        }
+      })
+  } else{
+    editWatch = EditorView.updateListener.of((update) => {
       if (update.docChanged)
       {
         debouncedUpdate()
       }
     })
+  }
+
 
     this.view = new EditorView({
       doc: "",
