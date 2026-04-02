@@ -14,8 +14,8 @@ export function joinRoom(roomCode, name, callback) {
     socket.emit("joinRoom", roomCode, name, callback);
 }
 
-export function createRoom(roomName, instructorName, html, css, javascript, callback) {
-    socket.emit("createRoom", roomName, instructorName, html, css, javascript, callback);
+export function createRoom(roomName, instructorName, html, css, js, callback) {
+    socket.emit("createRoom", roomName, instructorName, html, css, js, callback);
 }
 
 
@@ -86,7 +86,7 @@ socket.on("sendViewCode", (fromID, fromName, code) => {
         state.shareIn.type = "view";
         state.shareIn.studentName = fromName;
         state.shareIn.html = code.html;
-        state.shareIn.javascript = code.javascript;
+        state.shareIn.js = code.js;
         state.shareIn.css = code.css;
     }
 });

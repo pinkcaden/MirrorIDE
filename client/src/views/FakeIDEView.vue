@@ -6,7 +6,7 @@
       Instructor name: {{state.connectionInfo.room['instructorName']}}<br>
       Your name: {{state.connectionInfo.name}}<br>
       Your role: {{state.connectionInfo.role}}<br>
-      Languages: <span v-if="state.connectionInfo.room['html']">HTML </span><span v-if="state.connectionInfo.room['javascript']">JS </span><span v-if="state.connectionInfo.room['css']">CSS</span>
+      Languages: <span v-if="state.connectionInfo.room['html']">HTML </span><span v-if="state.connectionInfo.room['js']">JS </span><span v-if="state.connectionInfo.room['css']">CSS</span>
       <br><br>
 
       <div v-if="state.connectionInfo.role === 'instructor'">
@@ -36,9 +36,9 @@
         html
         <input id="htmlBox" ref="htmlBox" type="text" v-model="state.code.html" @input="state.shareOutChange()"/>
       </label>
-      <label v-if="state.connectionInfo.room['javascript']">
+      <label v-if="state.connectionInfo.room['js']">
         js
-        <input id="jsBox" ref="jsBox" type="text" v-model="state.code.javascript" @input="state.shareOutChange()"/>
+        <input id="jsBox" ref="jsBox" type="text" v-model="state.code.js" @input="state.shareOutChange()"/>
       </label>
       <label v-if="state.connectionInfo.room['css']">
         css
@@ -61,7 +61,7 @@
         </label>
         <label>
           Student js
-          <input id="studentJsBox" ref="studentJsBox" type="text" v-model="state.shareIn.javascript" :readonly="state.shareIn.type === 'view'"/>
+          <input id="studentJsBox" ref="studentJsBox" type="text" v-model="state.shareIn.js" :readonly="state.shareIn.type === 'view'"/>
         </label>
         <label>
           Student css
