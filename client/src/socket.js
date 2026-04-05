@@ -24,11 +24,23 @@ export function createRoom(roomName, instructorName, html, css, javascript, call
 //IDE state
 export const state = reactive({
     connectionInfo: null,
+
+    // studentList map in this format
+    // {
+    //      studentID: {
+    //          name: name,
+    //          activity: {
+    //              lines: lines,
+    //              lastEdit: lastEdit
+    //          }
+    //      }
+    // }
     studentList: null,
-    shareInView: {},
-    shareOutView: {},
-    shareInEdit: {},
-    shareOutEdit: {},
+    shareInView: null,
+    shareOutView: null,
+    shareInEdit: null,
+    shareOutEdit: null,
+    getActivity: () => {console.log("getActivity called before set")},
 
     getConnectionInfo() {
         socket.emit("getConnectionInfo", (roomCode, room, name, role) => {
@@ -38,7 +50,12 @@ export const state = reactive({
 
     getStudentList() {
         socket.emit("getStudentList", (studentList) => {
+            //gets student list without activity first since its faster
             this.studentList = studentList;
+        });
+        socket.emit("getActivityList", (studentActivityList) => {
+            //gets student list including activity
+            this.studentList = studentActivityList;
         });
     },
 
@@ -55,7 +72,7 @@ export const state = reactive({
 
     disconnectViewCode() {
         socket.emit("disconnectViewCode", this.shareInView.id);
-        this.shareInView = {};
+        this.shareInView = null;
     },
 
     requestEditCode(conID, conName) {
@@ -78,7 +95,7 @@ export const state = reactive({
 
     disconnectEditCode() {
         socket.emit("disconnectEditCode", this.shareOutEdit.id);
-        this.shareOutEdit = {};
+        this.shareOutEdit = null;
         clearInterval(sendCodeEditInterval);
     },
 
@@ -90,7 +107,7 @@ export const state = reactive({
     setShareOutEditCode(code) {
         this.shareOutEdit.codeChanged = true;
         this.shareOutEdit.code = code;
-    },
+    }
 });
 
 socket.on("connectViewCode", (shareID) => {
@@ -110,7 +127,7 @@ socket.on("connectViewCode", (shareID) => {
 
 //TODO what if viewee connection drops? need to disconnect viewer in this case. same for edit
 socket.on("disconnectViewCode", () => {
-    state.shareOutView = {};
+    state.shareOutView = null;
     clearInterval(sendCodeViewInterval);
 });
 
@@ -137,7 +154,7 @@ socket.on("connectEditCode", (shareID, code) => {
 });
 
 socket.on("disconnectEditCode", () => {
-    state.shareInEdit = {};
+    state.shareInEdit = null;
 });
 
 socket.on("sendCodeView", (fromID, code) => {
@@ -156,4 +173,8 @@ socket.on("sendCodeEdit", (fromID, code) => {
     if(state.shareInEdit.id === fromID) {
         state.shareInEdit.code = code;
     }
+});
+
+socket.on("getActivity", (callback) => {
+    callback(state.getActivity());
 });

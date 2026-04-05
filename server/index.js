@@ -70,7 +70,7 @@ io.on('connection', (socket) => {
             socket.role = role;
             socket.join(roomCode);
             if(role === "student") {
-                rooms[roomCode].students[socket.id] = name;
+                rooms[roomCode].students[socket.id] = {name};
             }
             console.log(role + " " + name + " joined room " + roomCode);
             callback();
@@ -120,6 +120,18 @@ io.on('connection', (socket) => {
     socket.on("disconnectEditCode", (conID) => {
         console.log("disconnectEditCode", socket.id, conID);
         socket.to(conID).emit("disconnectEditCode");
+    });
+
+    socket.on("getActivityList", (callback) => {
+        let studentActivityList = rooms[socket.roomCode].students;
+
+        for(const studentID in Object.keys(rooms[socket.roomCode].students)) {
+            socket.to(studentID).emit("getActivity", (activity) => {
+                studentActivityList[studentID].activity = activity;
+            });
+        }
+
+        callback(studentActivityList);
     });
 });
 
