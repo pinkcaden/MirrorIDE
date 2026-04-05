@@ -50,7 +50,6 @@ export const state = reactive({
             this.disconnectEditCode();
         }
         this.shareInView.id = conID;
-        this.shareInView.name = conName;
         socket.emit("connectViewCode", conID);
     },
 
