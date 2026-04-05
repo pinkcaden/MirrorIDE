@@ -70,7 +70,10 @@ io.on('connection', (socket) => {
             socket.role = role;
             socket.join(roomCode);
             if(role === "student") {
-                rooms[roomCode].students[socket.id] = {name};
+                rooms[roomCode].students[socket.id] = {
+                    name: name,
+                    activity: null
+                };
             }
             console.log(role + " " + name + " joined room " + roomCode);
             callback();
@@ -122,14 +125,19 @@ io.on('connection', (socket) => {
         socket.to(conID).emit("disconnectEditCode");
     });
 
-    socket.on("getActivityList", (callback) => {
+    socket.on("getActivityList", async (callback) => {
         let studentActivityList = rooms[socket.roomCode].students;
 
-        for(const studentID in Object.keys(rooms[socket.roomCode].students)) {
-            socket.to(studentID).emit("getActivity", (activity) => {
-                studentActivityList[studentID].activity = activity;
+        const promises = Object.keys(studentActivityList).map(studentID => {
+            return new Promise((resolve) => {
+                io.to(studentID).emit("getActivity", (activity) => {
+                    studentActivityList[studentID].activity = activity;
+                    resolve();
+                });
             });
-        }
+        });
+
+        await Promise.all(promises);
 
         callback(studentActivityList);
     });

@@ -40,7 +40,10 @@ export const state = reactive({
     shareOutView: null,
     shareInEdit: null,
     shareOutEdit: null,
-    getActivity: () => {console.log("getActivity called before set")},
+    getActivity: () => {
+        console.log("getActivity called before set");
+        return {};
+    },
 
     getConnectionInfo() {
         socket.emit("getConnectionInfo", (roomCode, room, name, role) => {

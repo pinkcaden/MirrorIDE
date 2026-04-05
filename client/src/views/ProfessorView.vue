@@ -14,7 +14,7 @@ onMounted(() => {
 
   studentListInterval = setInterval(() => {
     state.getStudentList();
-  }, 1000);
+  }, 5000);
 
   viewInterval = setInterval(() => {
     if (!ideRef.value) return;
