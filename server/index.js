@@ -129,8 +129,23 @@ io.on('connection', (socket) => {
         let studentActivityList = rooms[socket.roomCode].students;
 
         const promises = Object.keys(studentActivityList).map(studentID => {
+            const targetSocket = io.sockets.sockets.get(studentID);
+
+            if (!targetSocket) {
+                console.log("Socket not found:", studentID);
+                return Promise.resolve();
+            }
+
             return new Promise((resolve) => {
-                io.to(studentID).emit("getActivity", (activity) => {
+                const timeout = setTimeout(() => {
+                    console.log(`Timeout from ${studentID}`);
+                    resolve();
+                }, 2000);
+
+                targetSocket.emit("getActivity", (activity) => {
+                    clearTimeout(timeout);
+                    console.log("Received activity from", studentID, activity);
+
                     studentActivityList[studentID].activity = activity;
                     resolve();
                 });

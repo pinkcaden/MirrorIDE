@@ -60,7 +60,6 @@ function selectStudent(student) {
 <template>
   <div class="professorPage">
     <div class="sidebar">
-      <h3>Students</h3>
 
       <div v-if="connectionInfo">
         <p><b>Room:</b> {{ connectionInfo.room?.roomName }}</p>
@@ -68,13 +67,20 @@ function selectStudent(student) {
         <p><b>Instructor:</b> {{ connectionInfo.name }}</p>
       </div>
 
+      <br>
+      <h3>Students</h3>
+
       <div
           class="students"
-          v-for="student in students"
+          v-for="student in state.studentList"
           :key="student.id"
           @click="selectStudent(student)"
       >
         <div class="studentName">{{ student.name }}</div>
+        <div class="studentName" v-if="student.activity">
+          <div>{{ student.activity.lines }}</div>
+          <div>{{ student.activity.lastEdit }}</div>
+        </div>
       </div>
     </div>
 

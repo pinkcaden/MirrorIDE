@@ -40,9 +40,13 @@ export const state = reactive({
     shareOutView: null,
     shareInEdit: null,
     shareOutEdit: null,
-    getActivity: () => {
+
+    getActivity() {
         console.log("getActivity called before set");
-        return {};
+        return {
+            lines: 24,
+            lastEdit: 12
+        };
     },
 
     getConnectionInfo() {
@@ -59,6 +63,7 @@ export const state = reactive({
         socket.emit("getActivityList", (studentActivityList) => {
             //gets student list including activity
             this.studentList = studentActivityList;
+            console.log(this.studentList);
         });
     },
 
