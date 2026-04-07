@@ -158,6 +158,11 @@ export default {
       }
       return false
     },
+    setEditable(editable){
+      for (const value of Object.values(this._languages)) {
+        value.editor.setEditable(editable)
+      }
+    },
     getInactivity() {
       const inactivities = []
       for (const lang of Object.values(this._languages)) {
