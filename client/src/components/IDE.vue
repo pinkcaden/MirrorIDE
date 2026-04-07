@@ -54,7 +54,7 @@
 import TextEditor from './ide/TextEditor.vue'
 import Terminal from './ide/Terminal.vue'
 import RunButton from './ide/RunButton.vue';
-import Executor from '../utils/execution/iframeExecute.js'
+import Executor from '../utils/execution/workerExecute.js'
 
 const BUTTON_COLORS = {
   'js': {selected: "#F7ECBE", unselected: "#EDBF2D"},
@@ -95,9 +95,10 @@ export default {
       this.currentLanguage = lang
     }
     this.currentLanguage = Object.keys(this._languages)[0]
-    this._executor = new Executor(this.$refs["screen"])
-    const bound = this._executor.applyListener
-    bound(this.handleLog, this)
+
+    this._executor = new Executor()
+    this._executor.setScope(this)
+    this._executor.setLogHandle(this.handleLog)
   },
   watch: {
     currentLanguage(newValue, oldValue) {
@@ -123,12 +124,14 @@ export default {
   },
   methods: {
     handleLog(logObj){
+      console.log(logObj)
       if(logObj.level === 'log'){
         for (const value of logObj.values){
           this.$refs.terminal.log(value)
         }
       } else if(logObj.level === 'error'){
         for (const value of logObj.values){
+          console.log("hit")
           this.$refs.terminal.error(value)
         }
       } else if(logObj.level === 'warn') {
