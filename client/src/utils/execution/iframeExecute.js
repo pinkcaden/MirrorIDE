@@ -1,7 +1,7 @@
 import isEscaped from '../../utils/strings/isEscaped.js'
 
 
-export default class Executor {
+export default class IframeExecutor {
     logOverwrite;
     uuid;
     iframe;
@@ -41,11 +41,23 @@ export default class Executor {
             }
         }
 
-
-
-
-
     run(code) {
+
+        const jsCancelTimeout =
+            `function(){${code.js}};
+             function(){window.parent.postMessage({type: 'done', ideSource: '${this.uuid}'})}
+            `
+
+        const timeOut = setTimeout(() => {
+            this.iframe.srcdoc = "";
+        }, 3000)
+
+        window.addEventListener("message",(e) => {
+            if (e.data?.type === "done" && e.data?.ideSource === this.uuid){
+                clearTimeout(timeOut)
+            }
+        })
+
         this.iframe.srcdoc = `
     <!DOCTYPE html> 
     <html lang="en">
@@ -56,11 +68,13 @@ export default class Executor {
     </head>
     <body>
       ${code.html ? code.html : ''}
-      ${code.js ? `<script>${code.js}<\/script>` : ''}
+      ${code.js ? `<script>${jsCancelTimeout}<\/script>` : ''}
     </body>
     </html>
-  `
+`
     }
+
+
 
     applyListener = (consoleWork, scope) => {
         const id = this.uuid

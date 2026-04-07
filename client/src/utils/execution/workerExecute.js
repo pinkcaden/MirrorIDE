@@ -1,6 +1,6 @@
 
 
-export default class Executor {
+export default class WorkerExecutor {
     logOverwrite;
     uuid;
     worker;

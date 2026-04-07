@@ -54,7 +54,8 @@
 import TextEditor from './ide/TextEditor.vue'
 import Terminal from './ide/Terminal.vue'
 import RunButton from './ide/RunButton.vue';
-import Executor from '../utils/execution/workerExecute.js'
+import WorkerExecutor from '../utils/execution/workerExecute.js'
+import IframeExecutor from '../utils/execution/iframeExecute.js'
 
 const BUTTON_COLORS = {
   'js': {selected: "#F7ECBE", unselected: "#EDBF2D"},
@@ -96,9 +97,14 @@ export default {
     }
     this.currentLanguage = Object.keys(this._languages)[0]
 
-    this._executor = new Executor()
-    this._executor.setScope(this)
-    this._executor.setLogHandle(this.handleLog)
+    if (this.html){
+      this._executor = new IframeExecutor(this.$refs.screen)
+      this._executor.applyListener(this.handleLog, this)
+    } else {
+      this._executor = new WorkerExecutor()
+      this._executor.setScope(this)
+      this._executor.setLogHandle(this.handleLog)
+    }
   },
   watch: {
     currentLanguage(newValue, oldValue) {
@@ -229,7 +235,6 @@ export default {
     _popUpConfirmation(message) {
       return confirm(message)
     }
-
 
   }
 }
