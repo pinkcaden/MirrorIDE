@@ -130,6 +130,7 @@ export default {
   },
   methods: {
     handleLog(logObj){
+      console.log("HANDLING")
       console.log(logObj)
       if(logObj.level === 'log'){
         for (const value of logObj.values){

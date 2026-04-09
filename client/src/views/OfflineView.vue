@@ -52,7 +52,7 @@ export default {
     </div>
     <div> 1 Lines: {{this.ide0Lines}} ------ Time: {{ this.ide0Time }} -----  2 Time: {{ this.ide1Time }}   -----   2 Lines: {{this.ide0Lines}}</div>
     <IDE v-show="this.shown" ref="ide0" v-bind:css=true v-bind:js=true v-bind:html=true></IDE>
-    <IDE ref="ide1" v-bind:css=true v-bind:js=true v-bind:html=true></IDE>
+    <IDE ref="ide1" v-bind:css=true v-bind:js=true v-bind:html=false></IDE>
   </div>
 </template>
 

@@ -7,7 +7,7 @@ export default class WorkerExecutor {
 
     constructor() {
         this.uuid = crypto.randomUUID().toString();
-
+        this.timer = null
     }
 
     setLogHandle(newHandler) {
@@ -19,29 +19,34 @@ export default class WorkerExecutor {
 
     getWorkerCode(source) {
         return `
-    function send(type, payload) {
+    function __send__(type, payload) {
       self.postMessage({
         type,
         ideSource: '${this.uuid}',
         ...payload
       });
-    }
-
+    };
+    
+    let logCount = 0;
+    const MAX_LOGS = 500;
     ["log","warn","error"].forEach(level => {
       console[level] = (...args) => {
-        send("consoleMessage", { level, args });
+        logCount += 1;
+        if (logCount < MAX_LOGS) {__send__("consoleMessage", { level, args });}
       };
     });
 
     self.onmessage = () => {
       try {
         const result = (function() {
-          ${source}
+          (function(__send__) {
+            ${source}
+            })(() => {__send__("error", { error: "__send__ is not defined" })});
         })();
-
-        send("result", { result });
+        
+        __send__("result", { result });
       } catch (e) {
-        send("error", { error: e.message });
+        __send__("error", { error: e.message });
       }
     };
   `
@@ -49,6 +54,14 @@ export default class WorkerExecutor {
 
     compile(code) {
         if (code.js) {
+
+            try {
+                new Function(this.getWorkerCode(code.js));
+            } catch (error) {
+                return [false, error.message]
+            }
+            console.log('workwed')
+
             let source = code.js.toString();
             const noStrings = source.replace(/(["'`])(?:\\.|(?!\1).)*\1/g, '');
             if (/\bimport\b/.test(noStrings)){return [false, "Imports not allowed in MirrorIDE"]}
@@ -58,26 +71,46 @@ export default class WorkerExecutor {
     }
 
     run(code) {
-        console.log("run")
-        console.log(this.logHandle)
-        console.log(this.scope)
-        const blob = new Blob([this.getWorkerCode(code.js)], { type: "application/javascript" })
-        const worker = new Worker(URL.createObjectURL(blob))
-        console.log(worker)
-        worker.onmessage = (e) => {
-            if (e.data.ideSource !== this.uuid) return;
-            // if (e.data.type === "consoleMessage") {
-                this.logHandle.apply(this.scope, [{values: e.data.args, level: e.data.level}])
-            // }
-            if (e.data.type === "result"){
-                clearTimeout(timer);
+        let worker;
+        try {
+            const blob = new Blob([this.getWorkerCode(code.js)], { type: "application/javascript" })
+            worker = new Worker(URL.createObjectURL(blob))
+        } catch (err) {
+            this.logHandle.apply(this.scope, [{values: [err.message], level: "error"}])
+            return;
+        }
+        worker.addEventListener("messageerror", (err) => {
+            console.error("MESSAGE ERROR:", err);
+        });
+        worker.addEventListener("error", (err) => {
+            console.error("WORKER ERROR:", err);
+        });
+        console.log(this.getWorkerCode(code.js));
+        worker.onmessage = (msg) => {
+            if (msg.data.ideSource !== this.uuid) return;
+            if (msg.data.type === "consoleMessage") {
+                this.logHandle.apply(this.scope, [{values: msg.data.args, level: msg.data.level}])
+            }
+            if (msg.data.type === "result"){
+                clearTimeout(this.timer)
+                this.timer = null
+            }
+            if (msg.data.type === "error"){
+                this.logHandle.apply(this.scope, [{values: [msg.data.error], level: "error"}])
+                clearTimeout(this.timer)
+                this.timer = null
             }
         };
         worker.onerror = (err) => {
-            console.error("Worker error:", err);
+            if (this.timer) {
+                clearTimeout(this.timer)
+                this.timer = null
+            }
+            this.logHandle.apply(this.scope, [{values: [err.message], level: "error"}])
         };
 
-        const timer = setTimeout(()=>{
+        this.timer = setTimeout(()=>{
+            this.timer = null
             worker.terminate();
             this.logHandle.apply(this.scope, [{values: ["infinite loop / recursion"], level: "error"}])
         },3000)
