@@ -51,8 +51,8 @@ export default {
     },
     getInactivityColor(time) {
       if(time < 60) return "green";
-      if(time < 180) return "yellow";
-      if(time > 300) return "red";
+      if(time < 300) return "yellow";
+      return "red";
     }
   }
 }
@@ -80,7 +80,7 @@ export default {
     <div class="main">
       <div class="menubar">
         <button @click="toggleStudentList(!studentListToggle)">Toggle</button>
-        <div v-if="socketState.connected">
+        <div v-if="socketState.connected" class="connectionInfo">
           <p><b>Room:</b> {{ socketState.connectionInfo.room.roomName }}</p>
           <p><b>Code:</b> {{ socketState.connectionInfo.roomCode }}</p>
           <p><b>Name:</b> {{ socketState.connectionInfo.name }}</p>
@@ -162,6 +162,11 @@ export default {
   gap: 20px;
   height: 40px;
 }
+.connectionInfo {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+}
 
 .editorWrapper {
   min-height: 650px;
@@ -172,4 +177,5 @@ export default {
   padding: 0.5rem;
   box-sizing: border-box;
 }
+
 </style>

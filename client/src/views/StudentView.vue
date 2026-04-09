@@ -69,13 +69,18 @@ export default {
 
 <template>
   <div class="studentView">
+    <div class="menubar">
+      <div v-if="socketState.connected" class="connectionInfo">
+        <p><b>Room:</b> {{ socketState.connectionInfo.room.roomName }}</p>
+        <p><b>Code:</b> {{ socketState.connectionInfo.roomCode }}</p>
+        <p><b>Instructor:</b> {{ socketState.connectionInfo.room.instructorName }}</p>
+        <p><b>Name:</b> {{ socketState.connectionInfo.name }}</p>
+      </div>
+    </div>
     <h2>Student View</h2>
 
     <div v-if="socketState.connected">
-      <p><b>Room:</b> {{ socketState.connectionInfo.room.roomName }}</p>
-      <p><b>Code:</b> {{ socketState.connectionInfo.roomCode }}</p>
-      <p><b>Instructor:</b> {{ socketState.connectionInfo.room.instructorName }}</p>
-      <p><b>Name:</b> {{ socketState.connectionInfo.name }}</p>
+
     </div>
 
     <div v-if="socketState.shareInEdit.requestId !== null">
@@ -121,5 +126,19 @@ export default {
   overflow: auto;
   padding: 0.5rem;
   box-sizing: border-box;
+}
+
+.menubar {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: start;
+  gap: 20px;
+  height: 40px;
+}
+.connectionInfo {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
 }
 </style>
