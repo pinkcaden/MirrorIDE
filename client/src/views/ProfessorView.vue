@@ -1,96 +1,116 @@
-<script setup>
+<script>
 import IDE from "../components/IDE.vue";
-import { computed, onMounted, onBeforeUnmount, ref } from "vue";
+import {watch} from "vue";
 import { state } from "../socket";
 
-const ideRef = ref(null);
-let studentListInterval = null;
-let viewInterval = null;
-let lastApplied = "";
+let getStudentListInterval = null;
 
-onMounted(() => {
-  state.getConnectionInfo();
-  state.getStudentList();
-
-  studentListInterval = setInterval(() => {
-    state.getStudentList();
-  }, 5000);
-
-  viewInterval = setInterval(() => {
-    if (!ideRef.value) return;
-    if (!state.shareInView.code) return;
-
-    const incoming = state.shareInView.code;
-
-    const normalized = {
-      html: Array.isArray(incoming.html) ? incoming.html.join("\n") : (incoming.html ?? ""),
-      css: Array.isArray(incoming.css) ? incoming.css.join("\n") : (incoming.css ?? ""),
-      js: Array.isArray(incoming.js) ? incoming.js.join("\n") : (incoming.js ?? "")
-    };
-
-    const serialized = JSON.stringify(normalized);
-
-    if (serialized !== lastApplied) {
-      console.log("normalized professor code:", normalized);
-      ideRef.value.setTexts(normalized);
-      lastApplied = serialized;
+export default {
+  components: {IDE},
+  data() {
+    return {
+      socketState: state,
+      studentListToggle: false,
     }
-  }, 300);
-});
+  },
+  mounted() {
+    this.socketState.getConnectionInfo();
+    this.socketState.getStudentList();
 
-onBeforeUnmount(() => {
-  if (studentListInterval) clearInterval(studentListInterval);
-  if (viewInterval) clearInterval(viewInterval);
-});
+    watch(
+      () => this.socketState.shareInView.code,
+      (newCode) => {
+        if(newCode !== null) {
+          console.log("GOT CODE TO VIEW", newCode);
+          this.$refs.viewIDE.setTexts(newCode);
+        }
+      }
+    );
 
-const connectionInfo = computed(() => state.connectionInfo);
-const students = computed(() => {
-  if (!state.studentList) return [];
-  return Object.entries(state.studentList).map(([id, name]) => ({
-    id,
-    name
-  }));
-});
-
-function selectStudent(student) {
-  state.connectViewCode(student.id, student.name);
+    watch(
+        () => this.socketState.shareOutEdit.initialCode,
+        (initialCode) => {
+          if(initialCode !== null) {
+            console.log("GOT CODE TO EDIT", initialCode);
+            this.$refs.editIDE.setTexts(initialCode);
+            this.socketState.shareOutEdit.initialCode = null;
+          }
+        }
+    );
+  },
+  methods: {
+    toggleStudentList(toggle) {
+      if(toggle) {
+        this.socketState.getStudentList();
+        this.socketState.getActivityList();
+        getStudentListInterval = setInterval(this.socketState.getActivityList, 5000);
+      } else {
+        clearInterval(getStudentListInterval);
+      }
+      this.studentListToggle = toggle;
+    },
+    getInactivityColor(time) {
+      if(time < 60) return "green";
+      if(time < 180) return "yellow";
+      if(time > 300) return "red";
+    }
+  }
 }
 </script>
 
 <template>
   <div class="professorPage">
-    <div class="sidebar">
-
-      <div v-if="connectionInfo">
-        <p><b>Room:</b> {{ connectionInfo.room?.roomName }}</p>
-        <p><b>Code:</b> {{ connectionInfo.roomCode }}</p>
-        <p><b>Instructor:</b> {{ connectionInfo.name }}</p>
-      </div>
-
-      <br>
+    <div class="sidebar" v-if="studentListToggle">
       <h3>Students</h3>
 
       <div
           class="students"
-          v-for="student in state.studentList"
-          :key="student.id"
-          @click="selectStudent(student)"
+          v-for="(student, studentID) in socketState.studentList"
+          :key="studentID"
+          @click="this.socketState.connectViewCode(studentID, student.name);"
       >
         <div class="studentName">{{ student.name }}</div>
         <div class="studentName" v-if="student.activity">
-          <div>{{ student.activity.lines }}</div>
-          <div>{{ student.activity.lastEdit }}</div>
+          <div>Lines: {{ student.activity.lines }}</div>
+          <div :style="{color: getInactivityColor(student.activity.lastEdit)}">Time Inactive: {{ student.activity.lastEdit }}</div>
         </div>
       </div>
     </div>
 
     <div class="main">
-      <h2>Professor View</h2>
-          <div class="editorWrapper" v-if="state.connectionInfo">
-            <IDE ref="ideRef" :html="true" :css="true" :js="true"/>
-          </div>
+      <div class="menubar">
+        <button @click="toggleStudentList(!studentListToggle)">Toggle</button>
+        <div v-if="socketState.connected">
+          <p><b>Room:</b> {{ socketState.connectionInfo.room.roomName }}</p>
+          <p><b>Code:</b> {{ socketState.connectionInfo.roomCode }}</p>
+          <p><b>Name:</b> {{ socketState.connectionInfo.name }}</p>
         </div>
       </div>
+      <h2>Professor View</h2>
+      <div v-if="socketState.isViewing">
+        <p>Currently viewing {{socketState.shareInView.name}}'s code.</p>
+        <button @click="this.socketState.disconnectViewCode();">Stop Viewing</button>
+        <br>
+        <button @click="socketState.requestEditCode(this.socketState.shareInView.id, this.socketState.shareInView.name);">Edit Code</button>
+      </div>
+      <div v-if="socketState.shareOutEdit.requestId !== null">
+        <p>Currently requesting to edit {{socketState.shareOutEdit.requestName}}'s code.</p>
+        <button @click="socketState.cancelEditRequest();">Cancel Request</button>
+      </div>
+      <div v-if="socketState.isEditing">
+        <p>Currently editing {{socketState.shareOutEdit.name}}'s code.</p>
+        <button @click="this.socketState.disconnectEditCode();">Stop Editing</button>
+      </div>
+      <div class="editorWrapper" v-if="socketState.connected">
+<!--        main code-->
+        <IDE ref="IDE" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :share-out-func="socketState.setShareOutViewCode"/>
+<!--        view code-->
+        <IDE ref="viewIDE" v-show="socketState.isViewing" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js"/>
+<!--        edit code-->
+        <IDE ref="editIDE" v-show="socketState.isEditing" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :share-out-func="socketState.setShareOutEditCode"/>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -121,55 +141,26 @@ function selectStudent(student) {
   background: rgba(255,255,255,0.04);
 }
 
-.activeStudent {
-  background: rgba(255,255,255,0.08);
-}
-
 .studentName {
   font-weight: bold;
   margin-bottom: 0.35rem;
 }
 
-.studentMeta {
-  font-size: 0.85rem;
-  color: #aaa;
-  word-break: break-all;
-}
-
 .main {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   padding: 1.5rem;
   box-sizing: border-box;
 }
 
-.controls {
+.menubar {
   display: flex;
-  gap: 0.75rem;
-  margin: 1rem 0;
-}
-
-.requestBtn {
-  padding: 0.65rem 1rem;
-  border: 1px solid #333;
-  border-radius: 8px;
-  background: #111;
-  color: white;
-  cursor: pointer;
-}
-
-.requestBtn:hover {
-  background: #1b1b1b;
-}
-
-.editorGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.panel {
-  min-width: 0;
+  flex-direction: row;
+  width: 100%;
+  justify-content: start;
+  gap: 20px;
+  height: 40px;
 }
 
 .editorWrapper {
