@@ -53,6 +53,14 @@ export default {
       if(time < 60) return "green";
       if(time < 300) return "yellow";
       return "red";
+    },
+    getInactivityTime(seconds) {
+      if(seconds < 60) return seconds + "s";
+      return Math.trunc(seconds / 60) + "min";
+    },
+    viewStudent(studentID, studentName) {
+      this.$refs.viewIDE.setEditable(false);
+      this.socketState.connectViewCode(studentID, studentName);
     }
   }
 }
@@ -67,12 +75,14 @@ export default {
           class="students"
           v-for="(student, studentID) in socketState.studentList"
           :key="studentID"
-          @click="this.socketState.connectViewCode(studentID, student.name);"
+          @click="viewStudent(studentID, student.name)"
       >
-        <div class="studentName">{{ student.name }}</div>
-        <div class="studentName" v-if="student.activity">
+        <div class="studentListItem">{{ student.name }}</div>
+        <div class="studentListItem" v-if="student.activity">
           <div>Lines: {{ student.activity.lines }}</div>
-          <div :style="{color: getInactivityColor(student.activity.lastEdit)}">Time Inactive: {{ student.activity.lastEdit }}</div>
+
+          <div v-if="socketState.shareOutEdit.id === studentID">EDITING</div>
+          <div v-else :style="{color: getInactivityColor(student.activity.lastEdit)}">Last Edit: {{ getInactivityTime(student.activity.lastEdit) }} ago</div>
         </div>
       </div>
     </div>
@@ -141,7 +151,7 @@ export default {
   background: rgba(255,255,255,0.04);
 }
 
-.studentName {
+.studentListItem {
   font-weight: bold;
   margin-bottom: 0.35rem;
 }
