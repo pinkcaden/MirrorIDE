@@ -69,8 +69,17 @@ export default {
     getLastUpdate() {
       return this.lastEdit
     },
+    getLineCount(){
+      let count = 0;
+      this.getText().toString().split('\n').forEach(line => {
+        if (line.length > 0){
+          count++
+        }
+      })
+      return count
+    },
     getText() {
-      return this.view.state.doc
+      return this.view.state.doc.toString();
     },
     deleteText() {
       this.view.dispatch({changes: {from: 0, to: this.view.state.doc.length}}, "")

@@ -187,6 +187,13 @@ export default {
     },
     _popUpConfirmation(message) {
       return confirm(message)
+    },
+    getLineCount() {
+      let count = 0
+      for (const lang of Object.values(this._languages)){
+        count += lang.editor.getLineCount()
+      }
+      return count
     }
   }
 }
