@@ -13,6 +13,27 @@ const io = new Server(server, {
 
 app.use(express.static(join(__dirname, '../client/dist')));
 
+app.get("/", (req, res) => {
+    res.send("<a href='/rooms'>rooms</a><br><a href='/sockets'>sockets</a>");
+})
+app.get('/rooms', function(req, res){
+    res.header("Content-Type",'application/json');
+    res.send(JSON.stringify(rooms, null, 4));
+});
+app.get('/sockets', function(req, res){
+    res.header("Content-Type",'application/json');
+    res.send(JSON.stringify(Object.fromEntries(
+        Array.from(io.sockets.sockets.entries()).map(([id, s]) => [
+            id,
+            {
+                name: s.name,
+                room: s.roomCode,
+                role: s.role
+            }
+        ])
+    ), null, 4));
+});
+
 let rooms = {};
 
 const codeChars = [
@@ -36,17 +57,31 @@ function generateRoomCode() {
 io.on('connection', (socket) => {
     socket.name = "";
     socket.roomCode = "";
+    socket.role = "";
 
     console.log('a user connected: ' + socket.id);
     socket.on('disconnect', () => {
         console.log('a user disconnected: ' + socket.id);
+        if(!rooms[socket.roomCode]) return;
         if(socket.role === "student") {
             delete rooms[socket.roomCode].students[socket.id];
         } else if(socket.role === "instructor") {
-            //TODO destroy room data and disconnect students when instructor disconnects
-            //delete rooms[socket.roomCode];
+            Object.keys(rooms[socket.roomCode].students).forEach((studentID) => {
+                console.log(studentID);
+                socket.to(studentID).emit('disconnectRoom', "Instructor has disconnected.");
+            });
+            delete rooms[socket.roomCode];
         }
     });
+
+    socket.on('endSession', () => {
+        if(!rooms[socket.roomCode]) return;
+        Object.keys(rooms[socket.roomCode].students).forEach((studentID) => {
+            console.log(studentID);
+            socket.to(studentID).emit('disconnectRoom', "instructor has ended the session.");
+        });
+        delete rooms[socket.roomCode];
+    })
 
     socket.on("findRoom", (roomCode, callback) => {
         callback(rooms[roomCode]);
@@ -136,7 +171,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on("getActivityList", async (callback) => {
-        let studentActivityList = rooms[socket.roomCode].students;
+        let studentActivityList = rooms[socket.roomCode]?.students;
 
         const promises = Object.keys(studentActivityList).map(studentID => {
             const targetSocket = io.sockets.sockets.get(studentID);
