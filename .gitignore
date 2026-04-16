@@ -26,7 +26,7 @@ lerna-debug.log*
 # =========================
 # Environment files
 # =========================
-.env
+server/.env
 .env.*
 !.env.example
 *.local
