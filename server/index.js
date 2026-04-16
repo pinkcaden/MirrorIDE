@@ -14,6 +14,7 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || "localhost";
 
 app.use(express.static(join(__dirname, '../client/dist')));
 
@@ -208,5 +209,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, () => {
-    console.log(`server running at http://localhost:${PORT}`);
+    console.log(`server running at http://${HOST}:${PORT}`);
 });
