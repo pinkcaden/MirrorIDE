@@ -13,7 +13,7 @@
             </div>
 
             <div class="row ps-4">
-              <TextEditor ref="cssEditor" v-if="css" v-bind:lang-choice="'css'" @share = "this.handleShare"
+              <TextEditor ref="cssEditor" v-if="css" v-bind:lang-choice="'css'" :parentFunc = "this.handleShare"
                           v-show="this.currentLanguage === 'css'" ></TextEditor>
               <TextEditor ref="htmlEditor" v-if="html" v-bind:lang-choice="'html'" :parentFunc = "this.handleShare"
                           v-show="this.currentLanguage === 'html'"></TextEditor>
@@ -75,7 +75,8 @@ export default {
     js: {type: Boolean, default: false, readonly: true},
     css: {type: Boolean, default: false, readonly: true},
     html: {type: Boolean, default: false, readonly: true},
-    shareOutFunc: {type: Function, default: null, required: false, readonly: true}
+    shareOutFunc: {type: Function, default: null, required: false, readonly: true},
+    editable: {type: Boolean, default: true, required: false, readonly: true}
   },
   mounted() {
     if (this.js) {
@@ -91,6 +92,19 @@ export default {
       this.currentLanguage = lang
     }
     this.currentLanguage = Object.keys(this._languages)[0]
+
+
+    const viewCheck = setInterval(()=>{
+      let isView;
+      for (const lang of Object.values(this._languages)) {
+        isView = lang.editor.viewExists();
+        if (!isView) {break;}
+      }
+      if (isView) {
+        clearTimeout(viewCheck)
+        this.setEditable(this.editable)
+      }
+    }, 150)
   },
   watch: {
     currentLanguage(newValue, oldValue) {
@@ -116,47 +130,10 @@ export default {
   },
   methods: {
     handleShare(){
-      this.shareOutFunc(this.getTexts())
+      if (this.shareOutFunc) {this.shareOutFunc(this.getTexts())}
     },
     handleRun() {
       return 0
-    },
-    requestSteal() {
-      if (!this.isStolen) {
-        const confirmation = this._popUpConfirmation('Instructor wants to edit. Allow?')
-        if (confirmation) {
-          this._stolenDocs = {}
-          for (const [key, value] of Object.entries(this._languages)) {
-            value.editor.setEditable(false)
-            this._stolenDocs[key] = value.editor.getText()
-          }
-          this.isStolen = true
-          return true
-        }
-      }
-      return false
-    },
-    relinquishSteal(newTexts) {
-      if (this.isStolen) {
-        const confirmation = this._popUpConfirmation("Save instructor's edits?")
-        const times = {}
-        for (const [key, value] of Object.entries(this._languages)) {
-          times[key] = value.editor.lastEdit
-        }
-        if (confirmation) {
-          this.setTexts(newTexts)
-        } else {
-          this.setTexts(this._stolenDocs)
-        }
-        this._stolenDocs = {}
-        for (const [key, value] of Object.entries(this._languages)) {
-          value.editor.lastEdit = times[key]
-          value.editor.setEditable(true)
-        }
-        this.isStolen = false
-        return true
-      }
-      return false
     },
     setEditable(editable){
       for (const value of Object.values(this._languages)) {
@@ -168,7 +145,7 @@ export default {
       for (const lang of Object.values(this._languages)) {
         inactivities.push(lang.editor.getLastUpdate())
       }
-      return (Date.now() - Math.max(...inactivities)) / 1000
+      return Math.round((Date.now() - Math.max(...inactivities)) / 1000)
     },
     getTexts() {
       const texts = {}

@@ -104,7 +104,12 @@ export default {
           effects: this.themeCompartment.reconfigure([EditorView.theme({...baseTheme, "&" : {background : "white", color: "black", textAlign: "left"}})])
         })
       }
+    },
+    viewExists() {
+      console.log(this.view)
+      return this.view !== undefined;
     }
+
   },
   async mounted() {
 
