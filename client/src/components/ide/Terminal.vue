@@ -21,11 +21,11 @@ export default {
     log(message) {
       this.newDiv(message, 'white')
     },
-    output(message) {
+    output(message, level) {
       if (this._lastDiv === undefined) {
-        this.outputLine()
+        this[level]('')
       } else {
-        this._lastDiv.innerText = this._lastDiv.innerText + message.toString()
+        this._lastDiv.innerText = this._lastDiv.innerText + ' ' + message.toString()
       }
     },
     warn(message) {
@@ -36,6 +36,7 @@ export default {
     },
     newDiv(message, color) {
       const msg = document.createElement('div')
+      this._lastDiv = msg
       msg.innerText = message.toString()
       msg.style.color = color;
       this.$refs['terminal'].appendChild(msg);

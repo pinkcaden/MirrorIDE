@@ -36,6 +36,7 @@
               <div class="row justify-content-center">
                 <RunButton :parentRun="this.handleRun"></RunButton>
               </div>
+              <div ref = "screen"></div>
               <div class="row justify-content-center">
                 <Terminal ref="terminal"></Terminal>
               </div>
@@ -51,7 +52,7 @@
 import TextEditor from './ide/TextEditor.vue'
 import Terminal from './ide/Terminal.vue'
 import RunButton from './ide/RunButton.vue';
-
+import Runner from '../utils/execution/Runner.js'
 const BUTTON_COLORS = {
   'js': {selected: "#F7ECBE", unselected: "#EDBF2D"},
   'css': {selected: "#D5E4ED", unselected: "#2687D1"},
@@ -93,6 +94,7 @@ export default {
     }
     this.currentLanguage = Object.keys(this._languages)[0]
 
+    this.runner = new Runner(this.$refs.screen, this.handleLog)
 
     const viewCheck = setInterval(()=>{
       let isView;
@@ -129,11 +131,24 @@ export default {
     }
   },
   methods: {
+    handleLog(level, args) {
+        this.$refs.terminal[level](args[0])
+        for (let i = 1; i < args.length; i++) {
+          this.$refs.terminal.output(args[i], level)
+        }
+    },
     handleShare(){
       if (this.shareOutFunc) {this.shareOutFunc(this.getTexts())}
     },
     handleRun() {
-      return 0
+      this.$refs.terminal.clear()
+      const compiled = this.runner.compile(this.getTexts())
+      if (compiled.valid) {
+        this.runner.run(compiled.code, compiled.data)
+      } else {
+        this.$refs.terminal.error("Failed to compile: " + compiled.data)
+      }
+
     },
     setEditable(editable){
       for (const value of Object.values(this._languages)) {
@@ -161,9 +176,6 @@ export default {
           this._languages[key].editor.rewriteText(value)
         }
       }
-    },
-    _popUpConfirmation(message) {
-      return confirm(message)
     },
     getLineCount() {
       let count = 0

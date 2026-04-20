@@ -1,7 +1,8 @@
 <script>
 import IDE from '../components/IDE.vue'
+
 export default {
-  components: {IDE},
+  components: {IDE}
 }
 </script>
 

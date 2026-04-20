@@ -1,6 +1,6 @@
 <script>
 
-import throttle from "../../utils/throttle.js";
+import throttle from "../../utils/timing/throttle.js";
 
 export default {
   name: "RunButton",
@@ -23,7 +23,6 @@ export default {
       this.isRunning = true;
       await new Promise(r => setTimeout(r, 0))
       const ret = this.throttledRun()
-      console.log(ret)
       this.isRunning = false;
     }
   },
