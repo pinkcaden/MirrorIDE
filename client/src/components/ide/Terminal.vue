@@ -23,7 +23,7 @@ export default {
     },
     output(message, level) {
       if (this._lastDiv === undefined) {
-        this[level]('')
+        this[level](message)
       } else {
         this._lastDiv.innerText = this._lastDiv.innerText + ' ' + message.toString()
       }
