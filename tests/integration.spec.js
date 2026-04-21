@@ -45,10 +45,11 @@ test('Integration Test-01: professor creates room and dashboard loads', async ({
 
 test('Integration Test-02: student joins a valid room', async ({ browser }) => {
     const { roomCode } = await createRoom(browser);
-    const { studentPage } = await joinStudent(browser, 'Student Alex', roomCode);
+    const { studentPage } = await joinStudent(browser, 'Student Aidan', roomCode);
     await expect(studentPage).toHaveURL(/student/);
 });
 
+// suppose to pass but with a failing message!
 test('Integration Test-03: student joins an invalid room', async ({ browser }) => {
     const studentContext = await browser.newContext();
     const studentPage = await studentContext.newPage();
@@ -63,27 +64,27 @@ test('Integration Test-03: student joins an invalid room', async ({ browser }) =
 test('Integration Test-04: professor sees student appear after joining with no refresh', async ({ browser }) => {
     const { professorPage, roomCode } = await createRoom(browser);
     await professorPage.locator('[data-testid="toggle-student-list-btn"]').click();
-    await joinStudent(browser, 'Student Maya', roomCode);
-    await expect(professorPage.locator('[data-testid="student-list"]')).toContainText('Student Maya');
+    await joinStudent(browser, 'Student Aidan', roomCode);
+    await expect(professorPage.locator('[data-testid="student-list"]')).toContainText('Student Aidan');
 });
 
 test('Integration Test-05: multiple students join the room', async ({ browser }) => {
     const { professorPage, roomCode } = await createRoom(browser);
     await professorPage.locator('[data-testid="toggle-student-list-btn"]').click();
-    await joinStudent(browser, 'Student A', roomCode);
-    await joinStudent(browser, 'Student B', roomCode);
-    await joinStudent(browser, 'Student C', roomCode);
+    await joinStudent(browser, 'Student Aidan', roomCode);
+    await joinStudent(browser, 'Student David', roomCode);
+    await joinStudent(browser, 'Student Caden', roomCode);
     const studentList = professorPage.locator('[data-testid="student-list"]');
-    await expect(studentList).toContainText('Student A');
-    await expect(studentList).toContainText('Student B');
-    await expect(studentList).toContainText('Student C');
+    await expect(studentList).toContainText('Student Aidan');
+    await expect(studentList).toContainText('Student David');
+    await expect(studentList).toContainText('Student Caden');
 });
 
-test('System Test: complete classroom session flow works', async ({ browser }) => {
+test('System Test: complete classroom session works', async ({ browser }) => {
     const { professorContext, professorPage, roomCode } = await createRoom(browser);
     await professorPage.locator('[data-testid="toggle-student-list-btn"]').click();
-    const { studentContext, studentPage } = await joinStudent(browser, 'Student Alex', roomCode);
-    await expect(professorPage.locator('[data-testid="student-list"]')).toContainText('Student Alex');
+    const { studentContext, studentPage } = await joinStudent(browser, 'Student Caden', roomCode);
+    await expect(professorPage.locator('[data-testid="student-list"]')).toContainText('Student Caden');
     await expect(studentPage).toHaveURL(/student/);
     await expect(professorPage.locator('[data-testid="room-code"]')).toContainText(roomCode);
     await studentContext.close();
