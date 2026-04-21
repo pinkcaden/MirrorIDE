@@ -4,6 +4,7 @@ import CreateView from '../views/CreateView.vue'
 import OfflineView from '../views/OfflineView.vue'
 import StudentView from '../views/StudentView.vue'
 import ProfessorView from '../views/ProfessorView.vue'
+import loadtesting from '../views/loadtesting.vue'
 
 const routes = [
   {
@@ -36,7 +37,14 @@ const routes = [
       name: 'professor',
       component: ProfessorView,
       meta: {hideNavbar: true}
+  },
+  {
+      path: '/simulate',
+      name: 'simulate',
+      component: loadtesting,
+      meta: {hideNavbar: true}
   }
+
 ]
 
 const router = createRouter({
