@@ -178,6 +178,8 @@ io.on('connection', (socket) => {
     socket.on("getActivityList", async (callback) => {
         let studentActivityList = rooms[socket.roomCode]?.students;
 
+        if(!studentActivityList) return;
+
         const promises = Object.keys(studentActivityList).map(studentID => {
             const targetSocket = io.sockets.sockets.get(studentID);
 
