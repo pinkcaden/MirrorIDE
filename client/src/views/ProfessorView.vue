@@ -67,32 +67,37 @@ export default {
 </script>
 
 <template>
-  <div class="professorPage">
-    <div class="sidebar" v-if="studentListToggle">
+  <div class="professorPage" data-testid="professor-view">
+    <div class="sidebar" v-if="studentListToggle" data-testid="student-sidebar">
       <h3>Students</h3>
 
-      <div
-          class="students"
-          v-for="(student, studentID) in socketState.studentList"
-          :key="studentID"
-          @click="viewStudent(studentID, student.name)"
-      >
-        <div class="studentListItem">{{ student.name }}</div>
-        <div class="studentListItem" v-if="student.activity">
-          <div>Lines: {{ student.activity.lines }}</div>
+      <div data-testid="student-list">
+        <div
+            class="students"
+            data-testid="student-item"
+            v-for="(student, studentID) in socketState.studentList"
+            :key="studentID"
+            @click="viewStudent(studentID, student.name)"
+        >
+          <div class="studentListItem">{{ student.name }}</div>
+          <div class="studentListItem" v-if="student.activity">
+            <div>Lines: {{ student.activity.lines }}</div>
 
-          <div v-if="socketState.shareOutEdit.id === studentID">EDITING</div>
-          <div v-else :style="{color: getInactivityColor(student.activity.lastEdit)}">Last Edit: {{ getInactivityTime(student.activity.lastEdit) }} ago</div>
+            <div v-if="socketState.shareOutEdit.id === studentID">EDITING</div>
+            <div v-else :style="{color: getInactivityColor(student.activity.lastEdit)}">
+              Last Edit: {{ getInactivityTime(student.activity.lastEdit) }} ago
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="main">
       <div class="menubar">
-        <button @click="toggleStudentList(!studentListToggle)">Toggle</button>
+        <button data-testid="toggle-student-list-btn" @click="toggleStudentList(!studentListToggle)">Toggle</button>
         <div v-if="socketState.connected" class="connectionInfo">
           <p><b>Room:</b> {{ socketState.connectionInfo.room.roomName }}</p>
-          <p><b>Code:</b> {{ socketState.connectionInfo.roomCode }}</p>
+          <p><b>Code:</b> <span data-testid="room-code">{{ socketState.connectionInfo.roomCode }}</span></p>
           <p><b>Name:</b> {{ socketState.connectionInfo.name }}</p>
         </div>
       </div>
@@ -112,11 +117,8 @@ export default {
         <button @click="this.socketState.disconnectEditCode();">Stop Editing</button>
       </div>
       <div class="editorWrapper" v-if="socketState.connected">
-<!--        main code-->
         <IDE ref="IDE" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :share-out-func="socketState.setShareOutViewCode"/>
-<!--        view code-->
         <IDE ref="viewIDE" v-show="socketState.isViewing" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js"/>
-<!--        edit code-->
         <IDE ref="editIDE" v-show="socketState.isEditing" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :share-out-func="socketState.setShareOutEditCode"/>
       </div>
     </div>
