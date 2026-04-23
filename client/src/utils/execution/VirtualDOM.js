@@ -79,7 +79,7 @@ const getDocumentProxy = (html, eventTable, runId) => {
         get: (implicit, prop) => {
             if (prop === "createElement") {
                 return (tagName) => {
-                    const newVirtId = 'v' + crypto.randomUUID().toString().substring(0,6);
+                    const newVirtId = 'v' + Math.random().toString().substring(2, 10);
                     const newRealNode = implicit.createElement(tagName)
                     const newNode = new Proxy(newRealNode, nodeProxyHandle);
                     newRealNode.setAttribute("virtid", newVirtId);

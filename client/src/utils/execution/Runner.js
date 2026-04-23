@@ -75,7 +75,7 @@ export default class Runner {
                     if (["script", "iframe", "src", "style", "canvas"].includes(nodeId)) {
                         return {valid: false, code: '', data: `"${nodeId}" tags are not allowed in MirrorIDE`};
                     }
-                    const virtId = 'v' + crypto.randomUUID().toString();
+                    const virtId = 'v' + Math.random().toString().substring(2, 10);
                     if (nodeId in idRules) {
                         let ruleText = idRules[nodeId].cssText;
                         ruleText = ruleText.substring(ruleText.indexOf('{'), ruleText.length);
@@ -86,7 +86,7 @@ export default class Runner {
                     displayNode.id = virtId;
                     let eventList = '';
                     Object.values(displayNode.attributes).filter(attr => attr.name.substring(0, 2) === 'on').forEach(attr => {
-                        const eKey = crypto.randomUUID().toString();
+                        const eKey = Math.random().toString().substring(2, 10);
                         const sendFunc = "__send__('" + eKey + "', '" + virtId + "')";
                         compileData.eventTable[eKey] = {
                             eventType: attr.name.substring(2),
@@ -141,7 +141,7 @@ export default class Runner {
 
     run(code, compileData) {
         this.workerRunning = false;
-        const runId = crypto.randomUUID().toString();
+        const runId = Math.random().toString().substring(2, 10);
         //!FRAME -> INTERFACE
         this.frame.srcdoc = `<!DOCTYPE html>
         <html lang="en">
@@ -334,7 +334,7 @@ export default class Runner {
             if (message.data.ideSource !== runId) {
                 return
             }
-            const raceId = crypto.randomUUID().toString();
+            const raceId = Math.random().toString().substring(2, 10);
             message.data.raceId = raceId
             this.worker.postMessage(message.data)
             this.raceAgainstMessage(this.worker, raceId, "domEventFinish", runId).then(() => {
@@ -350,7 +350,7 @@ export default class Runner {
         window.addEventListener("message", this.frameListener)
         this.worker.addEventListener("message", this.workerListener)
 
-        const runRaceId = crypto.randomUUID().toString()
+        const runRaceId = Math.random().toString().substring(2, 10)
         this.workerRunning = true;
         this.worker.postMessage({
             messageType: "runCode",
