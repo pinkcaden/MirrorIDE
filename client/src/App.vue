@@ -9,7 +9,6 @@
         <router-link class="nav-btn" to="/create">Create Room</router-link>
         <router-link class="nav-btn" to="/offline">Offline</router-link>
       </div>
-      <router-link class="nav-btn" to="/account">Account</router-link>
     </nav>
     <main class="main">
       <router-view/>
@@ -66,7 +65,7 @@ nav a.router-link-exact-active {
 .nav-links {
   justify-self: center;
   display: flex;
-  gap: 12px;
+  gap: 16px;
 }
 .nav-btn {
   padding: 7px 12px;
