@@ -94,9 +94,9 @@ export default {
     </div>
 
     <div class="editorWrapper" v-if="socketState.connected">
-<!--  main code-->
+      <!--  main code-->
       <IDE ref="IDE" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :share-out-func="socketState.setShareOutViewCode"/>
-<!--  view code-->
+      <!--  view code-->
       <IDE ref="viewIDE" v-show="socketState.isViewing" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js"/>
     </div>
   </div>

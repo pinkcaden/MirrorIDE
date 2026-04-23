@@ -1,24 +1,24 @@
 <template>
   <div class="join-page">
-    <div class="join-box">
-      <form ref="findForm" action="">
+    <div class="join-box" data-testid="join-room-view">
+      <form ref="findForm" action="" data-testid="find-room-form">
         <h1>Join Room</h1>
         <label>
           Enter room code:
-          <input ref="findInput" id="findInput" autocomplete="off" placeholder="000-000" v-model="formattedValue" @input="formatInput" type="text"/>
+          <input ref="findInput" id="findInput" data-testid="find-room-code-input" autocomplete="off" placeholder="000-000" v-model="formattedValue" @input="formatInput" type="text"/>
         </label>
-        <button ref="findRoomButton">Find Room</button>
-        <div ref="roomFoundMsg" id="roomFoundMsg"></div>
+        <button ref="findRoomButton" data-testid="find-room-btn">Find Room</button>
+        <div ref="roomFoundMsg" data-testid="room-found-message" id="roomFoundMsg"></div>
         <br>
       </form>
-      <form ref="nameForm" action="" style="display: none;">
+      <form ref="nameForm" action="" data-testid="join-name-form" style="display: none;">
         <label>
           Enter your name:
-          <input ref="nameInput" autocomplete="off" placeholder="name" type="text"/>
+          <input ref="nameInput" autocomplete="off" data-testid="student-name-input" placeholder="name" type="text"/>
         </label>
-        <button>Join Room</button>
+        <button data-testid="join-room-btn">Join Room</button>
       </form>
-      <div ref="errorMsg" id="errorMsg" style="color: red;"></div>
+      <div ref="errorMsg" id="errorMsg" data-testid="join-room-error" style="color: red;"></div>
     </div>
   </div>
 </template>
