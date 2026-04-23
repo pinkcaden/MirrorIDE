@@ -72,7 +72,7 @@ export default class Runner {
                     if (nodeId === "a" && node.href !== "") {
                         return {valid: false, code: '', data: `"a" tags cannot contain linksallowed in MirrorIDE`};
                     }
-                    if (["script", "iframe", "src", "style"].includes(nodeId)) {
+                    if (["script", "iframe", "src", "style", "canvas"].includes(nodeId)) {
                         return {valid: false, code: '', data: `"${nodeId}" tags are not allowed in MirrorIDE`};
                     }
                     const virtId = 'v' + crypto.randomUUID().toString();
@@ -135,9 +135,9 @@ export default class Runner {
     }
 
     run(code, compileData) {
-        let workerRunning = false;
+        this.workerRunning = false;
         const runId = crypto.randomUUID().toString();
-        //! FRAME -> INTERFACE
+        //!FRAME -> INTERFACE
         this.frame.srcdoc = `<!DOCTYPE html>
         <html lang="en">
             <head>
@@ -182,6 +182,11 @@ export default class Runner {
                             document.getElementById(message.data.elementKey).style.setProperty(message.data.prop, message.data.value);
                         }
                         return
+                    case "innerHTML":
+                        document.getElementById(message.data.elementKey).innerHTML = message.data.value;
+                        return
+                    case "innerText":
+                        document.getElementById(message.data.elementKey).innerHTML = message.data.value;
                     }})
             
             </script>
@@ -284,7 +289,6 @@ export default class Runner {
             switch (message.data.messageType) {
                 case "codeFail":
                     this.worker.terminate();
-                    workerRunning = false
                     this.cleanUp(runId)
                     this.logHandle("error", [message.data.errType, message.data.errMsg])
                     return
@@ -300,18 +304,23 @@ export default class Runner {
                 case "setStyle":
                     this.frame.contentWindow.postMessage(message.data)
                     return
+                case "innerText":
+                    this.frame.contentWindow.postMessage(message.data)
                 case "innerHTML":
+                    let badHTML = false;
                     const doc = this.parser.parseFromString(message.data.value, 'text/html')
                     Array.from(doc.querySelectorAll('*')).forEach((node) => {
                         for (const attr in node) {
                             if (attr.substring(0, 2) === "on" && !(node.getAttribute(attr) === null ||
                                 node.getAttribute(attr) === undefined || node.getAttribute(attr) === "")) {
                                 this.logHandle("warn", ["Inline event handlers are not allowed in innerHTML."])
+                                badHTML = true
                                 return
                             }
                         }
                     })
-                    this.frame.contentWindow.postMessage(message.data)
+                    if (!badHTML){this.frame.contentWindow.postMessage(message.data)}
+
             }
         }
 
@@ -325,7 +334,7 @@ export default class Runner {
             this.worker.postMessage(message.data)
             this.raceAgainstMessage(this.worker, raceId, "domEventFinish", runId).then(() => {
             }).catch((e) => {
-                if (workerRunning) {
+                if (this.workerRunning) {
                     this.cleanUp(runId)
                     this.worker.terminate();
                     this.logHandle("error", ["Infinite loop / recursion detected"])
@@ -337,7 +346,7 @@ export default class Runner {
         this.worker.addEventListener("message", this.workerListener)
 
         const runRaceId = crypto.randomUUID().toString()
-        workerRunning = true;
+        this.workerRunning = true;
         this.worker.postMessage({
             messageType: "runCode",
             ideSource: runId,
@@ -348,7 +357,7 @@ export default class Runner {
             .then((e) => {
             })
             .catch((e) => {
-                if (workerRunning) {
+                if (this.workerRunning) {
                     this.worker.terminate();
                     this.cleanUp(runId)
                     this.logHandle("error", ["Infinite loop / recursion detected"])

@@ -16,6 +16,9 @@ const getDocumentProxy = (html, eventTable, runId) => {
                     const ret = implicit[prop](...args)
                     return ret === undefined ? undefined : new Proxy (ret, nodeProxyHandle)
                 }
+            } else if (prop === "innerHTML" || prop === "innerText") {
+                console.log("hit")
+                return implicit.getAttribute(prop)
             } else if (prop.substring(0, 2) === "on") {
                 if (prop in implicit) {
                 }
@@ -57,6 +60,12 @@ const getDocumentProxy = (html, eventTable, runId) => {
             if (prop === "innerHTML") {
                 implicit[prop] = value
                 self.postMessage({messageType: "innerHTML", elementKey: implicit.getAttribute("virtid"),
+                value, ideSource : "${runId}"})
+                return true;
+            }
+            if (prop === "innerText"){
+                implicit.setAttribute("innerText", value)
+                self.postMessage({messageType: "innerText", elementKey: implicit.getAttribute("virtid"),
                 value, ideSource : "${runId}"})
                 return true;
             }
