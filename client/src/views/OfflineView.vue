@@ -7,7 +7,7 @@ export default {
 </script>
 
 <template>
-  <IDE :js = "true" :html = "true" :css = "true"></IDE>
+  <IDE :js = "false" :html = "true" :css = "true"></IDE>
 </template>
 
 <style scoped>

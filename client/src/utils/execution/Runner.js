@@ -127,7 +127,12 @@ export default class Runner {
             }
         }
         try {
-            compiledCode['js'] = code.js
+            if (!code.js || code.js.length === 0) {
+                compiledCode['js'] = `() => {};`
+            } else {
+                compiledCode['js'] = code.js
+
+            }
         } catch (e) {
             return {valid: false, code: '', data: e.message}
         }
