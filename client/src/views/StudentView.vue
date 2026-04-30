@@ -119,8 +119,9 @@ export default {
 
 .editorWrapper {
   flex: 1;
+  margin: 0 auto;
   min-height: 650px;
-  width: 100%;
+  width: 57%;
   border: 1px solid #333;
   border-radius: 12px;
   overflow: auto;

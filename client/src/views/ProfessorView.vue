@@ -222,7 +222,7 @@ export default {
 
 .editorWrapper {
   min-height: 650px;
-  width: 100%;
+  width: 65%;
   border: 1px solid #333;
   border-radius: 12px;
   overflow: auto;
