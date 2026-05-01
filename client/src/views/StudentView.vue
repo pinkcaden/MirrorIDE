@@ -102,6 +102,7 @@ export default {
       <!--  main code-->
       <IDE ref="IDE" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :share-out-func="socketState.setShareOutViewCode"/>
 <!--  view code-->
+      <h2 v-show="socketState.isViewing" style="margin-top: 20px;">Viewing {{socketState.shareInView.name}}'s Code</h2>
       <IDE ref="viewIDE" v-show="socketState.isViewing" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :editable="false"/>
     </div>
   </div>
