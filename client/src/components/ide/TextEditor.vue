@@ -96,10 +96,12 @@ export default {
     },
     setDarkMode(darkModeStatus) {
       if (darkModeStatus) {
+        this.$refs.main.style.background = "black"
         this.view.dispatch({
           effects: this.themeCompartment.reconfigure([EditorView.theme({...baseTheme, "&": {textAlign : "left"}}), oneDark])
         })
       } else {
+        this.$refs.main.style.background = "white"
         this.view.dispatch({
           effects: this.themeCompartment.reconfigure([EditorView.theme({...baseTheme, "&" : {background : "white", color: "black", textAlign: "left"}})])
         })
@@ -150,8 +152,8 @@ export default {
 
 <template>
 
-  <div class="container-lg w-auto h-auto p-0">
-    <div class="card border-2 border-black">
+  <div class="container-lg w-auto h-auto p-0" ref = "main">
+    <div class="card border-2 border-black" ref = "card">
       <div id = editor ref="editor">
       </div>
     </div>

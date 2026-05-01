@@ -6,6 +6,7 @@
                 text-start
                 bg-black
                 "
+       :style = "{display: 'flex', flexDirection: 'column-reverse'}"
   ></div>
 </template>
 
@@ -39,7 +40,7 @@ export default {
       this._lastDiv = msg
       msg.innerText = message.toString()
       msg.style.color = color;
-      this.$refs['terminal'].appendChild(msg);
+      this.$refs['terminal'].prepend(msg);
     },
     clear() {
       this.$refs.terminal.innerHTML = ''
