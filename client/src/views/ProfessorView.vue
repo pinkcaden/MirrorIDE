@@ -59,7 +59,6 @@ export default {
       return Math.trunc(seconds / 60) + "min";
     },
     viewStudent(studentID, studentName) {
-      this.$refs.viewIDE.setEditable(false);
       this.socketState.connectViewCode(studentID, studentName);
     }
   }
@@ -128,13 +127,12 @@ export default {
         <button @click="this.socketState.disconnectEditCode();">Stop Editing</button>
       </div>
       <div class="editorWrapper" v-if="socketState.connected">
-        <IDE ref="IDE" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css"
-             :js="socketState.connectionInfo.room.js" :share-out-func="socketState.setShareOutViewCode"/>
-        <IDE ref="viewIDE" v-show="socketState.isViewing" :html="socketState.connectionInfo.room.html"
-             :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js"/>
-        <IDE ref="editIDE" v-show="socketState.isEditing" :html="socketState.connectionInfo.room.html"
-             :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js"
-             :share-out-func="socketState.setShareOutEditCode"/>
+<!--        main code-->
+        <IDE ref="IDE" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :share-out-func="socketState.setShareOutViewCode"/>
+<!--        view code-->
+        <IDE ref="viewIDE" v-show="socketState.isViewing" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :editable="false"/>
+<!--        edit code-->
+        <IDE ref="editIDE" v-show="socketState.isEditing" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :share-out-func="socketState.setShareOutEditCode"/>
       </div>
     </div>
   </div>

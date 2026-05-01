@@ -18,8 +18,8 @@ export function joinRoom(roomCode, name, callback) {
     socket.emit("joinRoom", roomCode, name, callback);
 }
 
-export function createRoom(roomName, instructorName, html, css, js, callback) {
-    socket.emit("createRoom", roomName, instructorName, html, css, js, callback);
+export function createRoom(roomName, instructorName, html, css, js, shareCode, callback) {
+    socket.emit("createRoom", roomName, instructorName, html, css, js, shareCode, callback);
 }
 
 //IDE state
@@ -81,6 +81,29 @@ export const state = reactive({
                 state.connectionInfo.name = name;
                 state.connectionInfo.role = role;
                 state.connected = true;
+
+                console.log(role)
+                console.log(room.shareInstructorCode)
+                console.log(sendCodeViewInterval);
+
+                if(role === "student" && room.shareInstructorCode) {
+                    state.isViewing = true;
+                    state.shareInView.id = room.instructorID
+                    state.shareInView.name = room.instructorName
+                }
+
+                if(role === "instructor" && room.shareInstructorCode && sendCodeViewInterval === null) {
+                    function sendInstructorCode() {
+                        if (state.shareOutView.codeChanged) {
+                            socket.emit("sendInstructorCode", state.shareOutView.code);
+                            state.shareOutView.codeChanged = false;
+                        }
+                    }
+
+                    sendInstructorCode();
+                    sendCodeViewInterval = setInterval(sendInstructorCode, 3000);
+                }
+
                 resolve();
             });
         });
@@ -121,7 +144,7 @@ export const state = reactive({
         state.isViewing = false;
         socket.emit("disconnectViewCode", state.shareInView.id);
         state.shareInView.id = null;
-        state.shareInView.code = null;
+        state.shareInView.code = {html: "", css: "", js: ""};
     },
 
     requestEditCode(conID, conName) {
@@ -171,7 +194,16 @@ export const state = reactive({
         state.shareOutEdit.code = code;
     },
 
+    leaveSession() {
+        clearInterval(sendCodeViewInterval);
+        clearInterval(sendCodeEditInterval);
+        socket.emit("leaveSession");
+        router.push('/');
+    },
+
     endSession() {
+        clearInterval(sendCodeViewInterval);
+        clearInterval(sendCodeEditInterval);
         socket.emit("endSession");
         router.push('/');
     }
@@ -246,6 +278,17 @@ socket.on("rejectEditRequest", () => {
 socket.on("disconnectEditCode", () => {
     state.shareInEdit.id = null;
     state.shareInEdit.code = null;
+});
+
+socket.on("getInitialCode", (fromID) => {
+    console.log("sending initial code...", state.shareOutView.code);
+    socket.emit("sendInitialCode", fromID, state.shareOutView.code);
+});
+
+socket.on("sendInitialCode", (code) => {
+    console.log("got initial code to view: ", code);
+
+    state.shareInView.code = code;
 });
 
 socket.on("sendCodeView", (fromID, code) => {
