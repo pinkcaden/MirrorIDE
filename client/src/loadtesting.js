@@ -7,7 +7,7 @@ export function simulateRooms(numRooms, numStudentsPerRoom) {
     for (let i = 0; i < numRooms; i++) {
         const instSocket = io(URL);
 
-        instSocket.emit("createRoom", "SIMULATED ROOM " + i, "SIMULATED INSTRUCTOR " + i, true, true, true, async (err = undefined) => {
+        instSocket.emit("createRoom", "SIMULATED ROOM " + i, "SIMULATED INSTRUCTOR " + i, true, true, true, false, async (err = undefined) => {
             if (!err) {
                 let roomCode = "";
 
