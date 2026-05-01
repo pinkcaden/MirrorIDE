@@ -1,7 +1,7 @@
 <script>
 import IDE from "../components/IDE.vue";
 import {watch} from "vue";
-import { state } from "../socket";
+import {state} from "../socket";
 
 let getStudentListInterval = null;
 
@@ -18,19 +18,19 @@ export default {
     this.socketState.getStudentList();
 
     watch(
-      () => this.socketState.shareInView.code,
-      (newCode) => {
-        if(newCode !== null) {
-          console.log("GOT CODE TO VIEW", newCode);
-          this.$refs.viewIDE.setTexts(newCode);
+        () => this.socketState.shareInView.code,
+        (newCode) => {
+          if (newCode !== null) {
+            console.log("GOT CODE TO VIEW", newCode);
+            this.$refs.viewIDE.setTexts(newCode);
+          }
         }
-      }
     );
 
     watch(
         () => this.socketState.shareOutEdit.initialCode,
         (initialCode) => {
-          if(initialCode !== null) {
+          if (initialCode !== null) {
             console.log("GOT CODE TO EDIT", initialCode);
             this.$refs.editIDE.setTexts(initialCode);
             this.socketState.shareOutEdit.initialCode = null;
@@ -40,7 +40,7 @@ export default {
   },
   methods: {
     toggleStudentList(toggle) {
-      if(toggle) {
+      if (toggle) {
         this.socketState.getStudentList();
         this.socketState.getActivityList();
         getStudentListInterval = setInterval(this.socketState.getActivityList, 5000);
@@ -50,12 +50,12 @@ export default {
       this.studentListToggle = toggle;
     },
     getInactivityColor(time) {
-      if(time < 60) return "green";
-      if(time < 300) return "yellow";
+      if (time < 60) return "green";
+      if (time < 300) return "yellow";
       return "red";
     },
     getInactivityTime(seconds) {
-      if(seconds < 60) return seconds + "s";
+      if (seconds < 60) return seconds + "s";
       return Math.trunc(seconds / 60) + "min";
     },
     viewStudent(studentID, studentName) {
@@ -67,58 +67,74 @@ export default {
 </script>
 
 <template>
-  <div class="professorPage">
-    <div class="sidebar" v-if="studentListToggle">
+  <div class="professorPage" data-testid="professor-view">
+    <div class="sidebar" v-if="studentListToggle" data-testid="student-sidebar">
       <h3>Students</h3>
 
-      <div
-          class="students"
-          v-for="(student, studentID) in socketState.studentList"
-          :key="studentID"
-          @click="viewStudent(studentID, student.name)"
-      >
-        <div class="studentListItem">{{ student.name }}</div>
-        <div class="studentListItem" v-if="student.activity">
-          <div>Lines: {{ student.activity.lines }}</div>
-
-          <div v-if="socketState.shareOutEdit.id === studentID">EDITING</div>
-          <div v-else :style="{color: getInactivityColor(student.activity.lastEdit)}">Last Edit: {{ getInactivityTime(student.activity.lastEdit) }} ago</div>
+      <div class="studentTable" data-testid="student-list">
+        <div class="studentHeader">
+          <span>Name</span>
+          <span>Lines</span>
+          <span>Last Edit</span>
+        </div>
+        <div
+            class="studentRow"
+            data-testid="student-item"
+            v-for="(student, studentID) in socketState.studentList"
+            :key="studentID"
+            @click="viewStudent(studentID, student.name)"
+        >
+          <span class="studentName">{{ student.name }}</span>
+          <span>{{ student.activity ? student.activity.lines : 0 }}</span>
+          <span
+              v-if="socketState.shareOutEdit.id === studentID"
+              class="editingText"
+          > EDITING
+          </span>
+          <span
+              v-else-if="student.activity"
+              :style="{ color: getInactivityColor(student.activity.lastEdit) }"
+          > {{ getInactivityTime(student.activity.lastEdit) }} ago
+          </span>
         </div>
       </div>
     </div>
 
     <div class="main">
       <div class="menubar">
-        <button @click="toggleStudentList(!studentListToggle)">Toggle</button>
+        <button data-testid="toggle-student-list-btn" @click="toggleStudentList(!studentListToggle)">Toggle</button>
         <div v-if="socketState.connected" class="connectionInfo">
           <p><b>Room:</b> {{ socketState.connectionInfo.room.roomName }}</p>
-          <p><b>Code:</b> {{ socketState.connectionInfo.roomCode }}</p>
+          <p><b>Code:</b> <span data-testid="room-code">{{ socketState.connectionInfo.roomCode }}</span></p>
           <p><b>Name:</b> {{ socketState.connectionInfo.name }}</p>
         </div>
-        <button @click="socketState.endSession()">End Session</button>
       </div>
       <h2>Professor View</h2>
       <div v-if="socketState.isViewing">
-        <p>Currently viewing {{socketState.shareInView.name}}'s code.</p>
+        <p>Currently viewing {{ socketState.shareInView.name }}'s code.</p>
         <button @click="this.socketState.disconnectViewCode();">Stop Viewing</button>
         <br>
-        <button @click="socketState.requestEditCode(this.socketState.shareInView.id, this.socketState.shareInView.name);">Edit Code</button>
+        <button
+            @click="socketState.requestEditCode(this.socketState.shareInView.id, this.socketState.shareInView.name);">
+          Edit Code
+        </button>
       </div>
       <div v-if="socketState.shareOutEdit.requestId !== null">
-        <p>Currently requesting to edit {{socketState.shareOutEdit.requestName}}'s code.</p>
+        <p>Currently requesting to edit {{ socketState.shareOutEdit.requestName }}'s code.</p>
         <button @click="socketState.cancelEditRequest();">Cancel Request</button>
       </div>
       <div v-if="socketState.isEditing">
-        <p>Currently editing {{socketState.shareOutEdit.name}}'s code.</p>
+        <p>Currently editing {{ socketState.shareOutEdit.name }}'s code.</p>
         <button @click="this.socketState.disconnectEditCode();">Stop Editing</button>
       </div>
       <div class="editorWrapper" v-if="socketState.connected">
-<!--        main code-->
-        <IDE ref="IDE" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :share-out-func="socketState.setShareOutViewCode"/>
-<!--        view code-->
-        <IDE ref="viewIDE" v-show="socketState.isViewing" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js"/>
-<!--        edit code-->
-        <IDE ref="editIDE" v-show="socketState.isEditing" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :share-out-func="socketState.setShareOutEditCode"/>
+        <IDE ref="IDE" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css"
+             :js="socketState.connectionInfo.room.js" :share-out-func="socketState.setShareOutViewCode"/>
+        <IDE ref="viewIDE" v-show="socketState.isViewing" :html="socketState.connectionInfo.room.html"
+             :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js"/>
+        <IDE ref="editIDE" v-show="socketState.isEditing" :html="socketState.connectionInfo.room.html"
+             :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js"
+             :share-out-func="socketState.setShareOutEditCode"/>
       </div>
     </div>
   </div>
@@ -140,21 +156,45 @@ export default {
   box-sizing: border-box;
 }
 
-.students {
-  padding: 0.9rem;
+.studentTable {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.studentHeader, .studentRow {
+  display: grid;
+  grid-template-columns: 1.4fr 0.7fr 1fr;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.studentHeader {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #333;
+  color: #aaa;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.studentRow {
+  padding: 0.75rem;
   border: 1px solid #333;
-  border-radius: 10px;
-  margin-top: 0.75rem;
+  border-radius: 8px;
   cursor: pointer;
 }
 
-.students:hover {
-  background: rgba(255,255,255,0.04);
+.studentRow:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
 
-.studentListItem {
+.studentName {
   font-weight: bold;
-  margin-bottom: 0.35rem;
+}
+
+.editingText {
+  color: orange;
+  font-weight: bold;
 }
 
 .main {
@@ -173,6 +213,7 @@ export default {
   gap: 20px;
   height: 40px;
 }
+
 .connectionInfo {
   display: flex;
   flex-direction: row;
@@ -181,12 +222,11 @@ export default {
 
 .editorWrapper {
   min-height: 650px;
-  width: 100%;
+  width: 65%;
   border: 1px solid #333;
   border-radius: 12px;
   overflow: auto;
   padding: 0.5rem;
   box-sizing: border-box;
 }
-
 </style>
