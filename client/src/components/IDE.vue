@@ -1,8 +1,8 @@
 <template>
   <div :style="{display: 'inline-flex'}">
-    <div class="container m-0 p-0">
-      <div class="row">
-        <div class="col">
+    <div class="container m-0 p-0" :style = "darkMode ? {background: '#282C34'} : {background: 'white'}">
+      <div class="row p-0 m-0">
+        <div class="col m-0 p-0">
           <div class="container m-0 p-0">
             <div class="row m-0 p-0">
               <div :style="{display: 'inline-flex', flexDirection : 'row'}">
@@ -24,20 +24,20 @@
           </div>
         </div>
           <div class="col m-0 p-0">
-            <div class="container bg-white h-100 ">
+            <div class="container h-100">
               <div class="row ">
                 <div class="form-check text-black bg-secondary-subtle" >
-                  <input  class="form-check-input" v-model= "darkMode" type="checkbox" id="darkModeCheck">
                   <label class="form-check-label" for="darkModeCheck">
                     Dark Mode
                   </label>
+                  <input  class="form-check-input" v-model= "darkMode" type="checkbox" id="darkModeCheck" checked>
                 </div>
               </div>
               <div class="row justify-content-center">
                 <RunButton :parentRun="this.handleRun"></RunButton>
               </div>
-              <div ref = "screen"></div>
-              <div class="row justify-content-center">
+              <div ref = "screen" class = "border border-black border-2" :style = "{background: 'white'}"></div>
+              <div class="row justify-content-center border-2 border-white">
                 <Terminal ref="terminal"></Terminal>
               </div>
             </div>

@@ -99,7 +99,7 @@ export default {
     </div>
 
     <div class="editorWrapper" v-if="socketState.connected">
-<!--  main code-->
+      <!--  main code-->
       <IDE ref="IDE" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :share-out-func="socketState.setShareOutViewCode"/>
 <!--  view code-->
       <IDE ref="viewIDE" v-show="socketState.isViewing" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :editable="false"/>
@@ -124,8 +124,9 @@ export default {
 
 .editorWrapper {
   flex: 1;
+  margin: 0 auto;
   min-height: 650px;
-  width: 100%;
+  width: 57%;
   border: 1px solid #333;
   border-radius: 12px;
   overflow: auto;

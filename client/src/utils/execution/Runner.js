@@ -72,10 +72,10 @@ export default class Runner {
                     if (nodeId === "a" && node.href !== "") {
                         return {valid: false, code: '', data: `"a" tags cannot contain linksallowed in MirrorIDE`};
                     }
-                    if (["script", "iframe", "src", "style"].includes(nodeId)) {
+                    if (["script", "iframe", "src", "style", "canvas"].includes(nodeId)) {
                         return {valid: false, code: '', data: `"${nodeId}" tags are not allowed in MirrorIDE`};
                     }
-                    const virtId = 'v' + crypto.randomUUID().toString();
+                    const virtId = 'v' + Math.random().toString().substring(2, 10);
                     if (nodeId in idRules) {
                         let ruleText = idRules[nodeId].cssText;
                         ruleText = ruleText.substring(ruleText.indexOf('{'), ruleText.length);
@@ -86,7 +86,7 @@ export default class Runner {
                     displayNode.id = virtId;
                     let eventList = '';
                     Object.values(displayNode.attributes).filter(attr => attr.name.substring(0, 2) === 'on').forEach(attr => {
-                        const eKey = crypto.randomUUID().toString();
+                        const eKey = Math.random().toString().substring(2, 10);
                         const sendFunc = "__send__('" + eKey + "', '" + virtId + "')";
                         compileData.eventTable[eKey] = {
                             eventType: attr.name.substring(2),
@@ -127,7 +127,12 @@ export default class Runner {
             }
         }
         try {
-            compiledCode['js'] = code.js
+            if (!code.js || code.js.length === 0) {
+                compiledCode['js'] = `() => {};`
+            } else {
+                compiledCode['js'] = code.js
+
+            }
         } catch (e) {
             return {valid: false, code: '', data: e.message}
         }
@@ -135,9 +140,9 @@ export default class Runner {
     }
 
     run(code, compileData) {
-        let workerRunning = false;
-        const runId = crypto.randomUUID().toString();
-        //! FRAME -> INTERFACE
+        this.workerRunning = false;
+        const runId = Math.random().toString().substring(2, 10);
+        //!FRAME -> INTERFACE
         this.frame.srcdoc = `<!DOCTYPE html>
         <html lang="en">
             <head>
@@ -182,6 +187,11 @@ export default class Runner {
                             document.getElementById(message.data.elementKey).style.setProperty(message.data.prop, message.data.value);
                         }
                         return
+                    case "innerHTML":
+                        document.getElementById(message.data.elementKey).innerHTML = message.data.value;
+                        return
+                    case "innerText":
+                        document.getElementById(message.data.elementKey).innerHTML = message.data.value;
                     }})
             
             </script>
@@ -284,7 +294,6 @@ export default class Runner {
             switch (message.data.messageType) {
                 case "codeFail":
                     this.worker.terminate();
-                    workerRunning = false
                     this.cleanUp(runId)
                     this.logHandle("error", [message.data.errType, message.data.errMsg])
                     return
@@ -300,18 +309,23 @@ export default class Runner {
                 case "setStyle":
                     this.frame.contentWindow.postMessage(message.data)
                     return
+                case "innerText":
+                    this.frame.contentWindow.postMessage(message.data)
                 case "innerHTML":
+                    let badHTML = false;
                     const doc = this.parser.parseFromString(message.data.value, 'text/html')
                     Array.from(doc.querySelectorAll('*')).forEach((node) => {
                         for (const attr in node) {
                             if (attr.substring(0, 2) === "on" && !(node.getAttribute(attr) === null ||
                                 node.getAttribute(attr) === undefined || node.getAttribute(attr) === "")) {
                                 this.logHandle("warn", ["Inline event handlers are not allowed in innerHTML."])
+                                badHTML = true
                                 return
                             }
                         }
                     })
-                    this.frame.contentWindow.postMessage(message.data)
+                    if (!badHTML){this.frame.contentWindow.postMessage(message.data)}
+
             }
         }
 
@@ -320,12 +334,12 @@ export default class Runner {
             if (message.data.ideSource !== runId) {
                 return
             }
-            const raceId = crypto.randomUUID().toString();
+            const raceId = Math.random().toString().substring(2, 10);
             message.data.raceId = raceId
             this.worker.postMessage(message.data)
             this.raceAgainstMessage(this.worker, raceId, "domEventFinish", runId).then(() => {
             }).catch((e) => {
-                if (workerRunning) {
+                if (this.workerRunning) {
                     this.cleanUp(runId)
                     this.worker.terminate();
                     this.logHandle("error", ["Infinite loop / recursion detected"])
@@ -336,8 +350,8 @@ export default class Runner {
         window.addEventListener("message", this.frameListener)
         this.worker.addEventListener("message", this.workerListener)
 
-        const runRaceId = crypto.randomUUID().toString()
-        workerRunning = true;
+        const runRaceId = Math.random().toString().substring(2, 10)
+        this.workerRunning = true;
         this.worker.postMessage({
             messageType: "runCode",
             ideSource: runId,
@@ -348,7 +362,7 @@ export default class Runner {
             .then((e) => {
             })
             .catch((e) => {
-                if (workerRunning) {
+                if (this.workerRunning) {
                     this.worker.terminate();
                     this.cleanUp(runId)
                     this.logHandle("error", ["Infinite loop / recursion detected"])

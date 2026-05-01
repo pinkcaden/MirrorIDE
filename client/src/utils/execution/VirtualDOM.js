@@ -16,6 +16,9 @@ const getDocumentProxy = (html, eventTable, runId) => {
                     const ret = implicit[prop](...args)
                     return ret === undefined ? undefined : new Proxy (ret, nodeProxyHandle)
                 }
+            } else if (prop === "innerHTML" || prop === "innerText") {
+                console.log("hit")
+                return implicit.getAttribute(prop)
             } else if (prop.substring(0, 2) === "on") {
                 if (prop in implicit) {
                 }
@@ -60,6 +63,12 @@ const getDocumentProxy = (html, eventTable, runId) => {
                 value, ideSource : "${runId}"})
                 return true;
             }
+            if (prop === "innerText"){
+                implicit.setAttribute("innerText", value)
+                self.postMessage({messageType: "innerText", elementKey: implicit.getAttribute("virtid"),
+                value, ideSource : "${runId}"})
+                return true;
+            }
             if (prop.substring(0,2) === "on") {
 
             }
@@ -70,7 +79,7 @@ const getDocumentProxy = (html, eventTable, runId) => {
         get: (implicit, prop) => {
             if (prop === "createElement") {
                 return (tagName) => {
-                    const newVirtId = 'v' + crypto.randomUUID().toString().substring(0,6);
+                    const newVirtId = 'v' + Math.random().toString().substring(2, 10);
                     const newRealNode = implicit.createElement(tagName)
                     const newNode = new Proxy(newRealNode, nodeProxyHandle);
                     newRealNode.setAttribute("virtid", newVirtId);

@@ -4,11 +4,11 @@
       <h1>Create Room</h1>
       <label>
         Room Name
-        <input ref="roomNameInput" autocomplete="off" type="text" />
+        <input ref="roomNameInput" data-testid="room-name-input" autocomplete="off" type="text" />
       </label>
       <label>
         Instructor Name
-        <input ref="instructorNameInput" autocomplete="off" type="text" />
+        <input ref="instructorNameInput" data-testid="instructor-name-input" autocomplete="off" type="text" />
       </label>
 
       <div id="languageOptions">
@@ -34,9 +34,9 @@
         </label>
         <p>Let students view your code live, great for code-along sessions.</p>
       </div>
-      <button>Create Room</button>
+      <button data-testid="create-room-btn">Create Room</button>
     </form>
-    <div ref="errorMsg" style="color: red;"></div>
+    <div ref="errorMsg" data-testid="create-room-error" style="color: red;"></div>
   </div>
 </template>
 
