@@ -10,16 +10,29 @@
         Instructor Name
         <input ref="instructorNameInput" autocomplete="off" type="text" />
       </label>
+
       <div id="languageOptions">
+        Language Options
+        <p>Select the languages you'd like to be included in this session.</p>
+        <div id="languageLabels">
+          <label>
+            HTML <input ref="htmlInput" type="checkbox" checked/>
+          </label>
+          <label>
+            CSS <input ref="cssInput" type="checkbox" checked/>
+          </label>
+          <label>
+            Javascript <input ref="javascriptInput" type="checkbox" checked/>
+          </label>
+        </div>
+      </div>
+
+      <div id="shareCodeOptions">
         <label>
-          HTML <input ref="htmlInput" type="checkbox" checked/>
+          <input ref="shareCodeInput" type="checkbox" checked/>
+          Share code
         </label>
-        <label>
-          CSS <input ref="cssInput" type="checkbox" checked/>
-        </label>
-        <label>
-          Javascript <input ref="javascriptInput" type="checkbox" checked/>
-        </label>
+        <p>Let students view your code live, great for code-along sessions.</p>
       </div>
       <button>Create Room</button>
     </form>
@@ -43,6 +56,7 @@ export default {
             this.$refs.htmlInput.checked,
             this.$refs.cssInput.checked,
             this.$refs.javascriptInput.checked,
+            this.$refs.shareCodeInput.checked,
             (err = undefined) => {
           if(!err) {
             this.$router.push("/professor");
@@ -104,7 +118,7 @@ form {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 15px;
+  gap: 20px;
   box-sizing: border-box;
   backdrop-filter: blur(10px);
 }
@@ -133,11 +147,37 @@ label {
 }
 #languageOptions {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+#languageOptions > p {
+  margin-bottom: 5px;
+}
+#languageLabels {
+  display: flex;
   flex-direction: row;
-  gap: 15px;
+  gap: 20px;
   justify-content: center;
 }
-#languageOptions > label {
+#languageLabels > label {
+  flex-direction: row;
   align-items: center;
+  gap: 5px;
+}
+p {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+#shareCodeOptions {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+#shareCodeOptions > label {
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
 }
 </style>

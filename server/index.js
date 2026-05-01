@@ -69,6 +69,7 @@ io.on('connection', (socket) => {
         console.log('a user disconnected: ' + socket.id);
         if(!rooms[socket.roomCode]) return;
         if(socket.role === "student") {
+            clearInterval(rooms[socket.roomCode].shareCodeInterval);
             delete rooms[socket.roomCode].students[socket.id];
         } else if(socket.role === "instructor") {
             Object.keys(rooms[socket.roomCode].students).forEach((studentID) => {
@@ -79,8 +80,14 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('leaveSession', () => {
+        if(!rooms[socket.roomCode]) return;
+        delete rooms[socket.roomCode].students[socket.id];
+    })
+
     socket.on('endSession', () => {
         if(!rooms[socket.roomCode]) return;
+        if(rooms[socket.roomCode].shareCodeInterval) clearInterval(rooms[socket.roomCode].shareCodeInterval);
         Object.keys(rooms[socket.roomCode].students).forEach((studentID) => {
             console.log(studentID);
             socket.to(studentID).emit('disconnectRoom', "instructor has ended the session.");
@@ -96,9 +103,17 @@ io.on('connection', (socket) => {
         joinRoom(roomCode, name, "student", callback);
     });
 
-    socket.on("createRoom", (roomName, instructorName, html, css, js, callback) => {
+    socket.on("createRoom", (roomName, instructorName, html, css, js, shareCode, callback) => {
         const roomCode = generateRoomCode();
-        rooms[roomCode] = {roomName, instructorName, instructorID: socket.id, html, css, js, students: {}};
+        rooms[roomCode] = {
+            roomName,
+            instructorName,
+            instructorID: socket.id,
+            html, css, js,
+            students: {},
+            shareInstructorCode: shareCode
+        };
+
         joinRoom(roomCode, instructorName, "instructor", callback);
     });
 
@@ -114,6 +129,9 @@ io.on('connection', (socket) => {
                     name: name,
                     activity: null
                 };
+                if(rooms[roomCode].shareInstructorCode) {
+                    socket.to(rooms[roomCode].instructorID).emit("getInitialCode", socket.id);
+                }
             }
             console.log(role + " " + name + " joined room " + roomCode);
             callback();
@@ -125,6 +143,13 @@ io.on('connection', (socket) => {
     socket.on("getConnectionInfo", (callback) => {
         callback(socket.roomCode, rooms[socket.roomCode], socket.name, socket.role);
     });
+
+    socket.on("sendInstructorCode", (instructorCode) => {
+        Object.keys(rooms[socket.roomCode].students).forEach((socketID) => {
+            console.log(socketID);
+            socket.to(socketID).emit("sendCodeView", socket.id, instructorCode);
+        });
+    })
 
     socket.on("getStudentList", (callback) => {
         callback(rooms[socket.roomCode]?.students);
@@ -159,6 +184,11 @@ io.on('connection', (socket) => {
         console.log("sendCodeView", socket.id, code);
         socket.to(shareID).emit("sendCodeView", socket.id, code);
     });
+
+    socket.on("sendInitialCode", (shareID, code) => {
+        console.log("sendInitialCode", shareID, code);
+        socket.to(shareID).emit("sendInitialCode", code);
+    })
 
     socket.on("sendCodeEdit", (shareID, code) => {
         console.log("sendCodeEdit", socket.id, code);

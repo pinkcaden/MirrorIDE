@@ -20,7 +20,7 @@ export default {
           this.$refs.IDE.setEditable(true);
         }
       }
-    )
+    );
 
     watch(
       () => this.socketState.shareInEdit.code,
@@ -54,6 +54,10 @@ export default {
     } else {
       console.log("ide ref not found");
     }
+
+    setTimeout(() => {
+      this.$refs.viewIDE.setTexts(this.socketState.shareInView.code);
+    }, 3000);
   },
   methods: {
     acceptEditRequest() {
@@ -76,6 +80,7 @@ export default {
         <p><b>Instructor:</b> {{ socketState.connectionInfo.room.instructorName }}</p>
         <p><b>Name:</b> {{ socketState.connectionInfo.name }}</p>
       </div>
+      <button @click="socketState.leaveSession()">Leave Session</button>
     </div>
     <h2>Student View</h2>
 
@@ -97,7 +102,7 @@ export default {
 <!--  main code-->
       <IDE ref="IDE" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :share-out-func="socketState.setShareOutViewCode"/>
 <!--  view code-->
-      <IDE ref="viewIDE" v-show="socketState.isViewing" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js"/>
+      <IDE ref="viewIDE" v-show="socketState.isViewing" :html="socketState.connectionInfo.room.html" :css="socketState.connectionInfo.room.css" :js="socketState.connectionInfo.room.js" :editable="false"/>
     </div>
   </div>
 </template>
