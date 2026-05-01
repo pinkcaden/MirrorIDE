@@ -5,6 +5,7 @@ import OfflineView from '../views/OfflineView.vue'
 import StudentView from '../views/StudentView.vue'
 import ProfessorView from '../views/ProfessorView.vue'
 import loadtesting from '../views/loadtesting.vue'
+import idetesting from '../views/idetesting.vue'
 
 const routes = [
   {
@@ -43,7 +44,12 @@ const routes = [
       name: 'simulate',
       component: loadtesting,
       meta: {hideNavbar: true}
-  }
+  },
+    {
+        path: '/rundemo',
+        name: 'rundemo',
+        component: idetesting
+    }
 
 ]
 

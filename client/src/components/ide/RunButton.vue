@@ -16,7 +16,7 @@ export default {
     }
   },
   created() {
-    this.throttledRun = throttle(this.parentRun, 1500)
+    this.throttledRun = throttle(this.parentRun, 4000)
   },
   methods: {
     async runClick() {

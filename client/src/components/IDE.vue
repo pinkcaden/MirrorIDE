@@ -6,9 +6,12 @@
           <div class="container m-0 p-0">
             <div class="row m-0 p-0">
               <div :style="{display: 'inline-flex', flexDirection : 'row'}">
-                <button ref="jsBtn" :style="currentLanguage === 'js' ? {fontWeight: 'bold', background: '#F7ECBE'} : {fontWeight: 'normal', background: '#EDBF2D'}" v-if="js" @click="currentLanguage = 'js'" class="langBtn">JS</button>
-                <button ref="cssBtn" :style="currentLanguage === 'css' ? {fontWeight: 'bold', background: '#D5E4ED'} : {fontWeight: 'normal', background: '#2687D1'}" v-if="css" @click="currentLanguage = 'css'" class="langBtn">CSS</button>
-                <button ref="htmlBtn" :style="currentLanguage === 'html' ? {fontWeight: 'bold', background: '#E3D0B6'} : {fontWeight: 'normal', background: '#D98114'}" v-if="html" @click="currentLanguage = 'html'" class="langBtn">HTML</button>
+                <button ref="jsBtn" :style="currentLanguage === 'js' ? {fontWeight: 'bold', background: '#F7ECBE'} : {fontWeight: 'normal', background: '#EDBF2D'}"
+                        v-if="js" @click="currentLanguage = 'js'" class="langBtn">JS</button>
+                <button ref="cssBtn" :style="currentLanguage === 'css' ? {fontWeight: 'bold', background: '#D5E4ED'} : {fontWeight: 'normal', background: '#2687D1'}"
+                        v-if="css" @click="currentLanguage = 'css'" class="langBtn">CSS</button>
+                <button ref="htmlBtn" :style="currentLanguage === 'html' ? {fontWeight: 'bold', background: '#E3D0B6'} : {fontWeight: 'normal', background: '#D98114'}"
+                        v-if="html" @click="currentLanguage = 'html'" class="langBtn">HTML</button>
               </div>
             </div>
 
@@ -36,7 +39,7 @@
               <div class="row justify-content-center">
                 <RunButton :parentRun="this.handleRun"></RunButton>
               </div>
-              <div ref = "screen" class = "border border-black border-2" :style = "{background: 'white'}"></div>
+              <div v-show = "this.html" ref = "screen" class = "border border-black border-2" :style = "{background: 'white'}"></div>
               <div class="row justify-content-center border-2 border-white">
                 <Terminal ref="terminal"></Terminal>
               </div>

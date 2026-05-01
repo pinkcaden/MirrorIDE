@@ -1,15 +1,12 @@
 import getDocumentProxy from "./VirtualDOM.js";
-import debounceMaxWait from "../timing/debounceMaxWait.js";
 
 export default class Runner {
-
     raceAgainstMessage(listenSource, raceId, messageType, runId) {
         return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => {
+            this.timer = setTimeout(() => {
                 cleanup();
                 reject(new Error("Timed out"));
             }, 3000);
-
             function handler(event) {
                 if (event.data?.ideSource !== runId || event.data?.messageType !== messageType || event.data?.raceId !== raceId) {
                     return
@@ -17,14 +14,22 @@ export default class Runner {
                 cleanup();
                 resolve(event.data);
             }
-
+            const timer = this.timer;
             function cleanup() {
                 clearTimeout(timer);
                 listenSource.removeEventListener("message", handler);
             }
-
             listenSource.addEventListener("message", handler);
         });
+    }
+
+    findById(id) {
+        for (let node of this.buffer){
+            if (node.id === id) {
+                return node;
+            }
+        }
+        return this.frameDoc.getElementById(id);
     }
 
     constructor(root, logHandle) {
@@ -59,7 +64,6 @@ export default class Runner {
         }
         if (code.html && code.html !== "") {
             try {
-                this.mutationObservers = [];
                 const doc = this.parser.parseFromString(code.html, 'text/html');
                 const displayDoc = this.parser.parseFromString(code.html, 'text/html');
                 const nodes = doc.querySelectorAll('*');
@@ -69,11 +73,12 @@ export default class Runner {
                     const nodeId = node.id;
                     const displayNode = displayNodes[i];
                     //!FIND RESTRICTED TAG TYPES
-                    if (nodeId === "a" && node.href !== "") {
-                        return {valid: false, code: '', data: `"a" tags cannot contain linksallowed in MirrorIDE`};
+                    const tag = node.tagName.toLowerCase();
+                    if (tag === "a" && node.href !== "") {
+                        return {valid: false, code: '', data: `"a" tags may not contain links in MirrorIDE`};
                     }
-                    if (["script", "iframe", "src", "style", "canvas"].includes(nodeId)) {
-                        return {valid: false, code: '', data: `"${nodeId}" tags are not allowed in MirrorIDE`};
+                    if (["script", "iframe", "src", "style", "canvas", "img", "video"].includes(tag)) {
+                        return {valid: false, code: '', data: `"${tag}" tags are not allowed in MirrorIDE`};
                     }
                     const virtId = 'v' + Math.random().toString().substring(2, 10);
                     if (nodeId in idRules) {
@@ -100,12 +105,10 @@ export default class Runner {
                     node.setAttribute('events', eventList);
                     displayNode.setAttribute('events', eventList);
 
-
-
                 }
                 //! APPLY STYLE SHEETS
                 if (code.css && code.css.length > 0 && code.html) {
-                const displayCss = displayDoc.createElement('style')
+                    const displayCss = displayDoc.createElement('style')
                     Array.from(sheet.cssRules).map((rule) => {
                         return rule.cssText
                     }).join(' ')
@@ -119,7 +122,6 @@ export default class Runner {
                     displayDoc.body.prepend(displayCss)
                 }
 
-
                 compiledCode.html.structure = doc.body.innerHTML
                 compiledCode.html.display = displayDoc.body.innerHTML
             } catch (e) {
@@ -130,8 +132,12 @@ export default class Runner {
             if (!code.js || code.js.length === 0) {
                 compiledCode['js'] = `() => {};`
             } else {
+                const noStrings = code.js.replace(/(["'`])(?:\\.|(?!\1).)*\1/g, '');
+                const restrictedKeywords = ["import", "async", "await"]
+                let regex = new RegExp(String.raw`(?:^|[\s;])(?:${restrictedKeywords.join("|")})(?:$|[\s;])`, "g");
+                let result = regex.exec(noStrings)
+                if (result){return {valid: false, data: `${result[0]} keyword is not allowed in MirrorIDE`}}
                 compiledCode['js'] = code.js
-
             }
         } catch (e) {
             return {valid: false, code: '', data: e.message}
@@ -141,13 +147,194 @@ export default class Runner {
 
     run(code, compileData) {
         this.workerRunning = false;
+        this.frame.srcdoc = undefined;
         const runId = Math.random().toString().substring(2, 10);
+        //! WORKER BLOB
+        try {
+            const blob = new Blob([`
+    import {parseHTML} from 'https://esm.sh/linkedom';
+    const getDocumentProxy = ${getDocumentProxy.toString()}
+    let eventTable = ${JSON.stringify(compileData.eventTable)};
+
+    let document;
+    try{
+        document = getDocumentProxy(${JSON.stringify(code.html.structure ? code.html.structure : '')}, eventTable, "${runId}");
+    } catch(e) {console.log(e)}
+    
+    let logCount = 0;
+    const MAX_LOGS = 1000;
+    ["log","warn","error"].forEach(level => {
+      console[level] = (...args) => {
+        logCount += 1;
+        for (let i = 0; i < args.length; i += 1) {
+            if (args[i] === undefined) {
+                args[i] = 'undefined'
+            } else if (args[i] === null) {
+                args[i] = 'null'
+            } else if (typeof args[i] !== 'string') {
+                args[i] = JSON.stringify(args[i]);
+            }
+        }
+        if (logCount < MAX_LOGS) {self.postMessage({messageType: "consoleMessage", level, args, ideSource: "${runId}"})}
+      };
+    });
+
+    ["alert", "close", "setImmediate", "setTimeout", "setInterval", "clearTimeout", "clearInterval", "fetch"].forEach(func => {
+        globalThis[func] = (...args) => {console.warn(func + " is not available in"); return null;}
+        self[func] = (...args) => {console.warn(func + " is not available in MirrorIDE"); return null;}
+    })
+
+    self.onmessage = function(e) {
+        if (e.data?.ideSource !== "${runId}") {return;}
+        switch (e.data.messageType) {
+            case "runCode":
+                try {
+                    if (e.data.sourceCode.length < 1) { self.postMessage({messageType: "runCodeFinish", ideSource : "${runId}", raceId: e.data.raceId}); return}
+                        eval(e.data.sourceCode + \`;
+                        self.addEventListener("message", e => {
+                            if (e.data.ideSource !== "${runId}" || e.data.messageType !== "domEvent") {return}
+                            try {
+                                eval(eventTable[e.data.eventId].eventFunc);
+                            } catch (e) {self.postMessage({messageType: "codeFail", ideSource : "${runId}", errType : e.name, errMsg: e.message});}
+                            self.postMessage({messageType: "domEventFinish", ideSource: "${runId}", raceId: e.data.raceId});
+                    }); \`);
+                    self.postMessage({messageType: "runCodeFinish", ideSource : "${runId}", raceId: e.data.raceId});
+                    return
+                } catch (e) {self.postMessage({messageType: "codeFail", ideSource : "${runId}", errType : e.name, errMsg: e.message});}
+                return;
+            case "styleUpdate":
+                document.__setVirtCSS__(e.data.elementKey, e.data.value)
+    }}`
+            ], {type: "application/javascript"});
+            //! MAKE WORKER
+            this.worker = new Worker(URL.createObjectURL(blob), {type: "module"})
+        } catch (e) {
+            console.log(e);
+            return;
+        }
+
+        //! WORKER LISTENER
+        this.buffer = []
+        this.workerListener = (message) => {
+            if (message.data.ideSource !== runId) {
+                return;
+            }
+            if (message.data.messageType === "codeFail") {
+                this.worker.terminate();
+                this.workerRunning = false;
+                this.cleanUp();
+                this.logHandle("error", [message.data.errType, message.data.errMsg]);
+                return;
+            }
+            switch (message.data.messageType) {
+                case "consoleMessage":
+                    this.logHandle(message.data.level, message.data.args);
+                    return;
+                case "innerText":
+                    this.findById(message.data.elementKey).innerText = message.data.value;
+                    return;
+                case "setStyle":
+                    this.findById(message.data.elementKey).style.setProperty(message.data.prop, message.data.value);
+                    return;
+                case "innerHTML":
+                    const doc = this.parser.parseFromString(message.data.value, 'text/html');
+                    Array.from(doc.querySelectorAll('*')).forEach((node) => {
+                        for (const attr in node) {
+                            if (attr.substring(0, 2) === "on" && !(node.getAttribute(attr) === null ||
+                                node.getAttribute(attr) === undefined || node.getAttribute(attr) === "")) {
+                                this.logHandle("warn", ["Inline event handlers are not allowed in innerHTML."]);
+                                node.setAttribute(attr, "");
+                            }
+                        }
+                    })
+                    this.findById(message.data.elementKey).innerHTML = message.data.value;
+                    return;
+                case "createElement":
+                    const newElement = this.frameDoc.createElement(message.data.elementTag);
+                    newElement.id = message.data.newElementId;
+                    this.buffer.push(newElement);
+                    return;
+                case "moveElement":
+                    const realArgs = [];
+                    const moveTarget = this.frameDoc.getElementById(message.data.elementKey);
+                    for (const virtId of message.data.args) {
+                        realArgs.push(this.findById(virtId));
+                    }
+                    moveTarget[message.data.moveType](...realArgs)
+                    return;
+                case "className":
+                    const classTarget = this.findById(message.data.elementKey);
+                    classTarget.className = message.data.value
+                    const style = getComputedStyle(classTarget);
+                    let styleStr = '{'
+                    for (const prop of style) {
+                        if (!(prop.substring(0,4) === "-web" || prop.substring(0,4) === "anim"
+                            || prop.substring(0, 4) === "time")){
+                            styleStr += prop + " : " + style[prop] + "; ";
+                        }
+                    }
+                    styleStr += '}';
+                    this.worker.postMessage({messageType: "styleUpdate", ideSource: runId, elementKey: classTarget.id, value: styleStr});
+                    return
+                case "onEvent":
+                    console.log("gotcha")
+                    const eventTarget = this.findById(message.data.elementKey);
+                    eventTarget.setAttribute(message.data.eventType, message.data.sendFunc)
+                    return
+            }
+        }
+
+        //! FRAME LISTENER
+        this.frameListener = (message) => {
+            if (message.data.ideSource !== runId) {
+                return;
+            }
+            if (message.data.messageType === "domEvent"){
+                const raceId = Math.random().toString().substring(2, 10);
+                message.data.raceId = raceId;
+                this.worker.postMessage(message.data);
+                this.raceAgainstMessage(this.worker, raceId, "domEventFinish", runId)
+                    .then(() => {clearTimeout(this.timer);})
+                    .catch((e) => {
+                    if (this.workerRunning) {
+                        this.cleanUp();
+                        this.worker.terminate();
+                        this.logHandle("error", ["Infinite loop / recursion detected. \nThe script has been terminated."]);
+                    }
+                })
+            }
+        }
+
+        window.addEventListener("message", this.frameListener)
+        this.worker.addEventListener("message", this.workerListener)
+
+        const loadListener = () => {
+            this.frameDoc = this.frame.contentDocument;
+            const runRaceId = Math.random().toString().substring(2, 10);
+            this.workerRunning = true;
+            this.worker.postMessage({ messageType: "runCode", ideSource: runId, raceId: runRaceId, sourceCode: code.js});
+            this.raceAgainstMessage(this.worker, runRaceId, "runCodeFinish", runId)
+                .then((e) => {
+                    this.frame.removeEventListener("load", loadListener);
+                    clearTimeout(this.timer);
+                })
+                .catch((e) => {
+                    if (this.workerRunning) {
+                        clearTimeout(this.timer);
+                        this.frame.removeEventListener("load", loadListener);
+                        this.worker.terminate();
+                        this.cleanUp();
+                        this.logHandle("error", ["Infinite loop / recursion detected. \nThe script has been terminated."]);
+                    }
+                })
+        }
+        this.frame.addEventListener("load", loadListener)
+
         //!FRAME -> INTERFACE
         this.frame.srcdoc = `<!DOCTYPE html>
         <html lang="en">
             <head>
             <script>
-            const debounceMaxWait = ${debounceMaxWait};
             const buffer = [];
             const __send__ = (eventId, elementKey) => {
                  window.parent.postMessage({
@@ -156,229 +343,22 @@ export default class Runner {
                      ideSource: "${runId}",
                  }, "*");
             };
-            
             let eventTable = ${JSON.stringify(compileData.eventTable)};
-            window.addEventListener("message", (message) => {
-                if (message.data?.ideSource !== "${runId}") {return;}
-                switch (message.data?.messageType) {
-                    case "createElement":
-                        const newElement = document.createElement(message.data.elementTag);
-                        newElement.id = message.data.newElementId;
-                        buffer.push(newElement);
-                        return;
-                    case "moveElement":
-                        const realArgs = [];
-                            const target = document.getElementById(message.data.elementKey);
-                        for (const virtId of message.data.args) {
-                            const found = buffer.filter((node) => node.id === virtId);
-                            if (found.length > 0) {
-                                realArgs.push(found[0]);
-                            } else {
-                                realArgs.push(document.getElementById(virtId));
-                            }
-                        }
-                        target[message.data.moveType](...realArgs)
-                        return;
-                    case "setStyle":
-                        const found = buffer.filter((node) => node.id === message.data.elementKey);
-                        if (found.length > 0) {
-                            found[0].style.setProperty(message.data.prop, message.data.value);
-                        } else{
-                            document.getElementById(message.data.elementKey).style.setProperty(message.data.prop, message.data.value);
-                        }
-                        return
-                    case "innerHTML":
-                        document.getElementById(message.data.elementKey).innerHTML = message.data.value;
-                        return
-                    case "innerText":
-                        document.getElementById(message.data.elementKey).innerHTML = message.data.value;
-                    }})
-            
             </script>
             </head>
             <body>
-
             ${code.html['display'] ? code.html['display'] : ''}
-            
-            <script>
-            let mutationObservers = [];
-            
-            window.addEventListener("message", event => {
-                if (event.data?.messageType !== "stopUpdates" || event.data?.ideSource !== "${runId}") {return;}
-                    mutationObservers.forEach(observer => {
-                        observer.disconnect();
-                    })
-            })
-
-            for(const node of document.querySelectorAll("*")){
-                const observer = new MutationObserver((mutations, observer) => {
-                    for (const m of mutations) {
-                       
-                        // for (const prop of newStyle) {
-                        //     if (!(prop.substring(0,9) === "animation" || prop.substring(0,4) === "view"
-                        //     || prop.substring(0,7) === "-webkit") || prop.substring(0,8) === "timeline"){
-                        //        
-                        //     }
-                        // }
-                    }
-                });
-                mutationObservers.push(observer);
-                observer.observe(node, {attributes: true, attributeFilter : ["style", "classList", "class"]})
-            }
-            
-            </script>
             </body>
         </html>`
-
-        //! WORKER BLOB
-        let blob;
-
-        try {
-            blob = new Blob([
-    `${getDocumentProxy(runId)}
-    let eventTable = ${JSON.stringify(compileData.eventTable)};
-
-    let document;
-    try{
-        document = getDocumentProxy(${JSON.stringify(code.html.structure ? code.html.structure : '')}, eventTable, "${runId}");
-    } catch(e) {console.log(e)}
-    let logCount = 0;
-    const MAX_LOGS = 500;
-    ["log","warn","error"].forEach(level => {
-      console[level] = (...args) => {
-        logCount += 1;
-        
-        for (let i = 0; i < args.length; i += 1) {
-            if (args[i] === undefined) {
-                args[i] = 'undefined'
-            } else if (args[i] === null) {
-                args[i] = 'null'
-            } else {
-                args[i] = JSON.stringify(args[i]);
-            }
-        }
-        if (logCount < MAX_LOGS) {self.postMessage({messageType: "consoleMessage", level, args, ideSource: "${runId}"})}
-      };
-    });
-
-    self.onmessage = function(e) {
-        if (e.data?.ideSource !== "${runId}") {return;}
-        switch (e.data.messageType) {
-            case "runCode":
-                try {
-                    if (e.data.sourceCode.length < 1) {
-                        self.postMessage({messageType: "runCodeFinish", ideSource : "${runId}", raceId: e.data.raceId}); return}
-                        eval(e.data.sourceCode + \`;
-                        self.addEventListener("message", e => {
-                            if (e.data.ideSource !== "${runId}" || e.data.messageType !== "domEvent") {return}
-                            eval(eventTable[e.data.eventId].eventFunc);
-                            self.postMessage({messageType: "domEventFinish", ideSource: "${runId}", raceId: e.data.raceId});
-                    }); \`);
-                    self.postMessage({messageType: "runCodeFinish", ideSource : "${runId}", raceId: e.data.raceId});
-                    return
-                } catch (e) {self.postMessage({messageType: "codeFail", ideSource : "${runId}", errType : e.name, errMsg: e.message})}
-            break;
-    }}`
-            ], {type: "application/javascript"})
-        } catch (e) {
-            console.log(e);
-            return
-        }
-        //! MAKE WORKER
-        this.worker = new Worker(URL.createObjectURL(blob), {type: "module"})
-        //! WORKER LISTENER
-        this.workerListener = (message) => {
-            if (message.data.ideSource !== runId) {
-                return
-            }
-            switch (message.data.messageType) {
-                case "codeFail":
-                    this.worker.terminate();
-                    this.cleanUp(runId)
-                    this.logHandle("error", [message.data.errType, message.data.errMsg])
-                    return
-                case "consoleMessage":
-                    this.logHandle(message.data.level, message.data.args)
-                    return
-                case "createElement":
-                    this.frame.contentWindow.postMessage(message.data)
-                    return
-                case "moveElement":
-                    this.frame.contentWindow.postMessage(message.data)
-                    return
-                case "setStyle":
-                    this.frame.contentWindow.postMessage(message.data)
-                    return
-                case "innerText":
-                    this.frame.contentWindow.postMessage(message.data)
-                case "innerHTML":
-                    let badHTML = false;
-                    const doc = this.parser.parseFromString(message.data.value, 'text/html')
-                    Array.from(doc.querySelectorAll('*')).forEach((node) => {
-                        for (const attr in node) {
-                            if (attr.substring(0, 2) === "on" && !(node.getAttribute(attr) === null ||
-                                node.getAttribute(attr) === undefined || node.getAttribute(attr) === "")) {
-                                this.logHandle("warn", ["Inline event handlers are not allowed in innerHTML."])
-                                badHTML = true
-                                return
-                            }
-                        }
-                    })
-                    if (!badHTML){this.frame.contentWindow.postMessage(message.data)}
-
-            }
         }
 
-        //! FRAME LISTENER
-        this.frameListener = (message) => {
-            if (message.data.ideSource !== runId) {
-                return
-            }
-            const raceId = Math.random().toString().substring(2, 10);
-            message.data.raceId = raceId
-            this.worker.postMessage(message.data)
-            this.raceAgainstMessage(this.worker, raceId, "domEventFinish", runId).then(() => {
-            }).catch((e) => {
-                if (this.workerRunning) {
-                    this.cleanUp(runId)
-                    this.worker.terminate();
-                    this.logHandle("error", ["Infinite loop / recursion detected"])
-                }
-            })
+    cleanUp() {
+        clearTimeout(this.timer);
+        if (this.frameListener) {
+            window.removeEventListener("message", this.frameListener);
         }
-
-        window.addEventListener("message", this.frameListener)
-        this.worker.addEventListener("message", this.workerListener)
-
-        const runRaceId = Math.random().toString().substring(2, 10)
-        this.workerRunning = true;
-        this.worker.postMessage({
-            messageType: "runCode",
-            ideSource: runId,
-            raceId: runRaceId,
-            sourceCode: (code.js ? code.js : '')
-        })
-        this.raceAgainstMessage(this.worker, runRaceId, "runCodeFinish", runId)
-            .then((e) => {
-            })
-            .catch((e) => {
-                if (this.workerRunning) {
-                    this.worker.terminate();
-                    this.cleanUp(runId)
-                    this.logHandle("error", ["Infinite loop / recursion detected"])
-                }
-            })
-    }
-
-    cleanUp(runId) {
-        if (this.frame.srcdoc !== ''){
-            this.frame.contentWindow.postMessage({messageType: "stopUpdates", ideSource: runId})
-        }
-        if (this.frameListener){
-            window.removeEventListener("message", this.frameListener)
-        }
-        if (this.workerListener){
-            this.worker.removeEventListener("message", this.workerListener)
+        if (this.workerListener) {
+            this.worker.removeEventListener("message", this.workerListener);
         }
     }
 
