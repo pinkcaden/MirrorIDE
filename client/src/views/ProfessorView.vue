@@ -107,6 +107,7 @@ export default {
           <p><b>Code:</b> <span data-testid="room-code">{{ socketState.connectionInfo.roomCode }}</span></p>
           <p><b>Name:</b> {{ socketState.connectionInfo.name }}</p>
         </div>
+        <button @click="socketState.endSession()">End Session</button>
       </div>
       <h2>Professor View</h2>
       <div v-if="socketState.isViewing">
