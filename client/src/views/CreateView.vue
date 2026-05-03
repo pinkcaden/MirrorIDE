@@ -49,7 +49,9 @@ export default {
     this.$refs.createForm.addEventListener('submit', (event) => {
       event.stopPropagation();
       event.preventDefault();
-      if(this.$refs.roomNameInput.value && this.$refs.instructorNameInput.value) {
+      if(!this.$refs.instructorNameInput.value || !this.$refs.roomNameInput.value) {
+        this.$refs.errorMsg.innerHTML = "Please fill all required fields to create a room.";
+      } else {
         createRoom(
             this.$refs.roomNameInput.value,
             this.$refs.instructorNameInput.value,
@@ -58,12 +60,12 @@ export default {
             this.$refs.javascriptInput.checked,
             this.$refs.shareCodeInput.checked,
             (err = undefined) => {
-          if(!err) {
-            this.$router.push("/professor");
-          } else {
-            this.$refs.errorMsg.innerHTML = "Failed to create room. " + err;
-          }
-        });
+              if (!err) {
+                this.$router.push("/professor");
+              } else {
+                this.$refs.errorMsg.innerHTML = "Failed to create room. " + err;
+              }
+            });
       }
     });
   }

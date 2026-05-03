@@ -101,7 +101,7 @@ export default {
 
     <div class="main">
       <div class="menubar">
-        <button data-testid="toggle-student-list-btn" @click="toggleStudentList(!studentListToggle)">Toggle</button>
+        <button data-testid="toggle-student-list-btn" @click="toggleStudentList(!studentListToggle)">Student List</button>
         <div v-if="socketState.connected" class="connectionInfo">
           <p><b>Room:</b> {{ socketState.connectionInfo.room.roomName }}</p>
           <p><b>Code:</b> <span data-testid="room-code">{{ socketState.connectionInfo.roomCode }}</span></p>
